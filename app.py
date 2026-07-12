@@ -9,6 +9,52 @@ load_dotenv()
 
 # Configuración Inicial de la Página Web
 st.set_page_config(page_title="BotAlcer - Asistente ERC", page_icon="🏥", layout="centered")
+
+# Fondo blanco a través de CSS inyectado (evita que el modo oscuro lo rompa)
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: #ffffff !important;
+        color: #2c3e50 !important;
+    }
+
+    h1, h2, h3, p, span {
+        color: #1e3a8a !important;
+    }
+
+    [data-testid="stHeader"] {
+        display: none !important; /* Esconder completamente la cabecera invisible */
+    }
+
+    # Subimos el logo y bajamos el título
+    [data-testid="stHorizontalBlock"] {
+        margin-top: -5rem !important;    /* Desplaza la imagen hacia arriba para absorber el vacío */
+        margin-bottom: 1rem !important; /* Contrae el espacio vacío de la parte inferior de la imagen */
+    }
+
+    # Personalizamos la entrada de texto del usuario
+    [data-testid="stChatInput"] {
+        border: 5px solid # !important;
+        border-radius: 15px !important;
+        background-color: #ffffff !important;
+    }
+
+    [data-testid="stChatInput"] textarea {
+        background-color: #009837 !important;
+        color: #000000 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True  # <-- ¡Muy importante para que el CSS funcione!
+)
+
+# Añado el logo centrado
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    # Al estar dentro de col2, st.image centrará el logo automáticamente en el medio de la web
+    st.image("Pictures/LogoWeb.png", width=200)
+
 st.title("🏥 BotAlcer")
 st.subheader("Asistente experto en Enfermedad Renal Crónica")
 
