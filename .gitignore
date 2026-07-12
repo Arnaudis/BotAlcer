@@ -1,0 +1,14 @@
+# Entorno virtual
+.venv/
+venv/
+ENV/
+
+# Variables de entorno / Secretos
+.env
+
+# Archivos temporales de Python
+__pycache__/
+*.pyc
+
+# PDFs locales (opcional, por si no quieres subirlos por derechos o espacio)
+*.pdf
