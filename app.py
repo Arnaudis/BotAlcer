@@ -53,7 +53,7 @@ st.markdown(
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     # Al estar dentro de col2, st.image centrará el logo automáticamente en el medio de la web
-    st.image("Pictures/LogoWeb.png", width=200)
+    st.image("pictures/logoweb.png", width=200)
 
 st.title("🏥 BotAlcer")
 st.subheader("Asistente experto en Enfermedad Renal Crónica")
