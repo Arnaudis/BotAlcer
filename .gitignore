@@ -11,8 +11,6 @@ ENV/
 __pycache__/
 *.pyc
 
-# PDFs locales (opcional, por si no quieres subirlos por derechos o espacio)
-*.pdf
 =======
 # Byte-compiled / optimized / DLL files
 __pycache__/
