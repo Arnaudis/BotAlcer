@@ -27,15 +27,15 @@ st.markdown(
         display: none !important; /* Esconder completamente la cabecera invisible */
     }
 
-    # Subimos el logo y bajamos el título
+    /* Subimos el logo y bajamos el título */
     [data-testid="stHorizontalBlock"] {
         margin-top: -5rem !important;    /* Desplaza la imagen hacia arriba para absorber el vacío */
         margin-bottom: 1rem !important; /* Contrae el espacio vacío de la parte inferior de la imagen */
     }
 
-    # Personalizamos la entrada de texto del usuario
+    /* Personalizamos la entrada de texto del usuario */
     [data-testid="stChatInput"] {
-        border: 5px solid # !important;
+        border: 5px solid #009837 !important;
         border-radius: 15px !important;
         background-color: #ffffff !important;
     }
@@ -50,10 +50,17 @@ st.markdown(
 )
 
 # Añado el logo centrado
+# Construir ruta absoluta dinámica para la imagen
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LOGO_PATH = os.path.join(BASE_DIR, "pictures", "logo.png")
+
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     # Al estar dentro de col2, st.image centrará el logo automáticamente en el medio de la web
-    st.image("pictures/logo.png", width=200)
+    if os.path.exists(LOGO_PATH):
+        st.image(LOGO_PATH, width=200)
+    else:
+        st.error(f"No se encontró el logo en: {LOGO_PATH}")
 
 st.title("🏥 BotAlcer")
 st.subheader("Asistente experto en Enfermedad Renal Crónica")
