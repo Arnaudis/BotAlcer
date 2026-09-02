@@ -20,7 +20,6 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import OllamaLLM
-from langchain_community.llms import Ollama
 
 
 
@@ -36,9 +35,31 @@ if not PINECONE_API_KEY:
 
 
 
-# ------------------------
-# 3. Carga de Información
-# ------------------------
+# -------------------------------------------
+# 3. Embeddings en nomic-embed-text (Ollama)
+# -------------------------------------------
+
+ollama_url = os.getenv("OLLAMA_HOST")
+# Mistral es el LLM
+embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url="http://172.17.0.1:11434")
+
+
+
+# ---------------------------
+# 4. Preparación de Pinecone
+# ---------------------------
+
+pc = Pinecone(api_key=PINECONE_API_KEY)
+index_name = "botalcer-mistral"
+
+# Se conecta directamente al índice para evitar consultas adicionales a la API
+index = pc.Index(index_name)
+
+
+
+# -----------------------------------------------
+# 5. Carga de Información y Subida a Pinecone
+# -----------------------------------------------
 
 # Si fueramos a cargar varios PDFs...
 """
@@ -62,87 +83,63 @@ raw_docs_5 = loader_5.load()
 raw_docs_6 = loader_6.load()
 raw_docs = raw_docs_1 + raw_docs_2 + raw_docs_3 + raw_docs_4 + raw_docs_5 + raw_docs_6
 """
-# Pero los hemos unifiacado...
-PDF_PATH = "0_Informacion_Servicios.pdf"
-loader = PyPDFLoader(PDF_PATH)
-raw_docs = loader.load()
-# El chunk es la partición del texto en trozos más pequeñas. Hacemos que cada trozo tenga 1000 caracteres, 
-# con un solapamiento de 200 caracteres entre ellos, que es el chunk_overlap. Esto ayuda a mantener el contexto cuando se dividen los documentos.
-splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000,
-    chunk_overlap=200
-)
-docs = splitter.split_documents(raw_docs)
-print("Chunks generados:", len(docs))
 
-
-
-# -------------------------------------------
-# 4. Embeddings en nomic-embed-text (Ollama)
-# -------------------------------------------
-
-# Mistral es el LLM
-embeddings = OllamaEmbeddings(model="nomic-embed-text")
-
-
-
-# ---------------------------
-# 5. Preparación de Pinecone
-# ---------------------------
-
-pc = Pinecone(api_key=PINECONE_API_KEY)
-index_name = "botalcer-mistral"
-existing_indexes = pc.list_indexes().names()
-if index_name not in existing_indexes:
-    pc.create_index(
-        name=index_name,
-        dimension=768,  # Dimensión del embedding.
-        metric="cosine",
-        spec=ServerlessSpec(cloud="aws", region="us-east-1")
+# Subir a Pinecone solo si el índice está vacío.
+if index.describe_index_stats()["total_vector_count"] == 0:
+    print("El índice está vacío. Cargando PDF y subiendo documentos...")
+    
+    # PDF unificado con la información de los servicios
+    PDF_PATH = "0_Informacion_Servicios.pdf"
+    loader = PyPDFLoader(PDF_PATH)
+    raw_docs = loader.load()
+    
+    # El chunk es la partición del texto en trozos más pequeñas. Hacemos que cada trozo tenga 1000 caracteres, 
+    # con un solapamiento de 200 caracteres entre ellos, que es el chunk_overlap. Esto ayuda a mantener el contexto cuando se dividen los documentos.
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200
     )
-index = pc.Index(index_name)
-
-
-
-# -----------------------------------
-# 6. Subida de documentos a Pinecone
-# -----------------------------------
-
-vectors = []
-for i, d in enumerate(docs):
-    # El embed_query es para consultas, el embed_documents es para documentos. 
-    # Aunque en este caso, como solo tenemos un texto, podríamos usar cualquiera de los dos, pero lo correcto es usar embed_documents.
-    # vec = embeddings.embed_query(d.page_content)
-    vec = embeddings.embed_documents([d.page_content])[0]
-    vectors.append({
-        # Un id que será único por chunk.
-        "id": f"{PDF_PATH}_page_{d.metadata.get('page', 0)}_chunk_{i}",
-        "values": vec,
-        "metadata": {
-            # Texto del chunk, número de página (si está disponible) y fuente del documento.
-            "text": d.page_content,
-            "page": d.metadata.get("page", None),
-            "source": d.metadata.get("source", PDF_PATH)
-        }
-    })
-index.upsert(vectors=vectors)
-print("Documentos subidos a Pinecone:", len(vectors))
+    docs = splitter.split_documents(raw_docs)
+    print("Chunks generados:", len(docs))
+    
+    # Extraer todos los textos de una vez para acelerar los embeddings
+    texts = [d.page_content for d in docs]
+    vecs = embeddings.embed_documents(texts)
+    
+    vectors = []
+    for i, (d, vec) in enumerate(zip(docs, vecs)):
+        vectors.append({
+            # Un id que será único por chunk.
+            "id": f"{PDF_PATH}_page_{d.metadata.get('page', 0)}_chunk_{i}",
+            "values": vec,
+            "metadata": {
+                # Texto del chunk, número de página (si está disponible) y fuente del documento.
+                "text": d.page_content,
+                "page": d.metadata.get("page", None),
+                "source": d.metadata.get("source", PDF_PATH)
+            }
+        })
+    index.upsert(vectors=vectors)
+    print("Documentos subidos a Pinecone:", len(vectors))
+else:
+    print("El índice de Pinecone ya contiene datos. Omitiendo lectura de PDF y subida.")
 
 
 
 # ----------------------
-# 7. Gestión del Modelo
+# 6. Gestión del Modelo
 # ----------------------
 
 # Si la temperaturas es 0.0, las respuestas que obtendremos serán siempre las mismas para la misma pregunta.
 # Con la temperatura a 0.2 para que de respuestas casi idénticas
 # Si queremos respuestas más variadas, podemos subir la temperatura a 0.6 o 0.8, pero cuidado con respuestas incoherentes.
-llm = OllamaLLM(model="mistral", temperature=0.2)
+#llm = OllamaLLM(model="mistral", temperature=0.2)
+llm = OllamaLLM(model="llama3.2:1b", temperature=0.2, base_url="http://172.17.0.1:11434")   # <- Ajusta esta URL según corresponda (localhost, 172.17.0.1 o IP publica)
 
 
 
 # --------------------------------
-# 8. Memoria para la conversación
+# 7. Memoria para la conversación
 # --------------------------------
 
 # Esta lista, inicialmente vacía, se usará para almacenar la conversacion entre usuario y asistente
@@ -151,7 +148,7 @@ historial_conversacion = []
 
 
 # -------------------------------------
-# 9. Función RAG que incorpora memoria
+# 8. Función RAG que incorpora memoria
 # -------------------------------------
 
 def rag_query(query, k=4):
@@ -159,28 +156,28 @@ def rag_query(query, k=4):
     # Para Mistral 7B, mejor 4.
     # embed_query es lo correcto para consultas del usuario.
     qvec = embeddings.embed_query(query)
-    res = index.query(
-        vector=qvec,
-        top_k=k,
-        include_metadata=True
-    )
+    res = index.query(vector=qvec, top_k=k, include_metadata=True)
+    
     # Si no hay coincidencias, devolvemos mensaje claro.
     if not res["matches"]:
         return "O tu pregunta no está bien formulada o no encontré información adecuada sobre tu pregunta para poder responderte."
+    
     # Filtrar por similitud mínima. 
     # Si es muy alto podemos quedarnos sin resultados aunque si se baja mucho el valor, se pueden obtener resultados sin relación con la pregunta.
-    matches = [m for m in res["matches"] if m["score"] > 0.5]
+    matches = [m for m in res["matches"] if m["score"] > 0.5][:k]
+    
     # Si después del filtrado no queda nada, devolvemos un mensaje claro
     if not matches:
         return "O tu pregunta no está bien formulada o no encontré información adecuada en el documento para poder responderte."
-    # Limitar a los k mejores
-    matches = matches[:k]
+    
     # Construimos el contexto concatenando los chunks recuperados.
     context = "\n\n".join(m["metadata"]["text"] for m in matches)
+    
     # Obtener historial resumido
     history_text = ""
-    for i in historial_conversacion:
+    for i in historial_conversacion[-4:]:
         history_text += f"Usuario: {i['usuario']}\nAsistente: {i['asistente']}\n\n"
+    
     # Prompt mejorado: incluye memoria + contexto RAG. Además es flexible pues permite conversación continua y razonamiento.
     # Además incluimos etiquetas para especificar los diferentes roles (sistema, usuario, asistente) y el modelo entiende mejor el formato de la conversación.
     prompt = f"""
@@ -228,7 +225,7 @@ def rag_query(query, k=4):
 
 
 # -------------------
-# 10. Ejemplo de uso
+# 9. Ejemplo de uso
 # -------------------
 
 # Solo para realizar preguntas por prompt, sin interacción continua ni memoria.
@@ -255,7 +252,7 @@ if __name__ == "__main__":
 
 
 # ----------------------------------------------------
-# 11. Chat interactivo con opción SALIR para concluir
+# 10. Chat interactivo con opción SALIR para concluir
 # ----------------------------------------------------
 
 if __name__ == "__main__":
