@@ -20,6 +20,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import OllamaLLM
+from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 
 
 
@@ -151,74 +152,76 @@ historial_conversacion = []
 # 8. Función RAG que incorpora memoria
 # -------------------------------------
 
+# Plantilla estructurada utilizando los roles nativos del modelo
+system_template = """Eres BotAlcer, un asistente experto en Enfermedad Renal Crónica (ERC) y en los
+servicios ofrecidos por la asociación ALCER. Tu misión es responder de forma
+clara, precisa y útil, basándote EXCLUSIVAMENTE en:
+1) El contexto recuperado del RAG.
+2) El historial resumido de la conversación.
+
+Reglas estrictas:
+- Si la información NO aparece en el contexto, dilo explícitamente.
+- No inventes datos, no completes información ausente.
+- No generalices si el documento no lo respalda.
+- Mantén un tono empático, profesional y en español.
+- Resume cuando sea necesario, pero sin perder precisión.
+- Si el usuario hace una pregunta fuera del contexto, indícalo y ofrece reformularla.
+- Si el usuario pide opinión, aclara que no puedes opinar y responde con datos del contexto.
+- Si el usuario pide algo que no está en el documento, dilo claramente.
+Tu objetivo es ser útil, exacto y seguro.
+
+Información recuperada del documento (RAG):
+{context}
+
+Resumen del historial de la conversación:
+{history}"""
+
+human_template = "Pregunta del usuario:\n{query}"
+
+prompt_template = ChatPromptTemplate.from_messages([
+    SystemMessagePromptTemplate.from_template(system_template),
+    HumanMessagePromptTemplate.from_template(human_template)
+])
+
+
 def rag_query(query, k=4):
-    # k es el número de resultados que queremos recuperar de Pinecone. Muy alto, podemos obtener resultados irrelevantes, pero si es muy bajo perder información útil.
-    # Para Mistral 7B, mejor 4.
-    # embed_query es lo correcto para consultas del usuario.
+    # Generar embedding de la consulta del usuario
     qvec = embeddings.embed_query(query)
     res = index.query(vector=qvec, top_k=k, include_metadata=True)
     
-    # Si no hay coincidencias, devolvemos mensaje claro.
+    # Comprobar si hay coincidencias
     if not res["matches"]:
         return "O tu pregunta no está bien formulada o no encontré información adecuada sobre tu pregunta para poder responderte."
     
-    # Filtrar por similitud mínima. 
-    # Si es muy alto podemos quedarnos sin resultados aunque si se baja mucho el valor, se pueden obtener resultados sin relación con la pregunta.
-    matches = [m for m in res["matches"] if m["score"] > 0.5][:k]
+    # Filtrar por similitud mínima de 0.3 y ordenar descendentemente por score
+    matches = [m for m in res["matches"] if m["score"] > 0.3]
+    matches = sorted(matches, key=lambda x: x["score"], reverse=True)[:k]
     
-    # Si después del filtrado no queda nada, devolvemos un mensaje claro
     if not matches:
         return "O tu pregunta no está bien formulada o no encontré información adecuada en el documento para poder responderte."
     
-    # Construimos el contexto concatenando los chunks recuperados.
+    # Construir el contexto concatenando los chunks recuperados
     context = "\n\n".join(m["metadata"]["text"] for m in matches)
     
-    # Obtener historial resumido
+    # Construir el historial resumido
     history_text = ""
     for i in historial_conversacion[-4:]:
         history_text += f"Usuario: {i['usuario']}\nAsistente: {i['asistente']}\n\n"
     
-    # Prompt mejorado: incluye memoria + contexto RAG. Además es flexible pues permite conversación continua y razonamiento.
-    # Además incluimos etiquetas para especificar los diferentes roles (sistema, usuario, asistente) y el modelo entiende mejor el formato de la conversación.
-    prompt = f"""
-    <sistema>
-    Eres BotAlcer, un asistente experto en Enfermedad Renal Crónica (ERC) y en los
-    servicios ofrecidos por la asociación ALCER. Tu misión es responder de forma
-    clara, precisa y útil, basándote EXCLUSIVAMENTE en:
-    1) El contexto recuperado del RAG.
-    2) El historial resumido de la conversación.
-    Reglas estrictas:
-    - Si la información NO aparece en el contexto, dilo explícitamente.
-    - No inventes datos, no completes información ausente.
-    - No generalices si el documento no lo respalda.
-    - Mantén un tono empático, profesional y en español.
-    - Resume cuando sea necesario, pero sin perder precisión.
-    - Si el usuario hace una pregunta fuera del contexto, indícalo y ofrece
-    reformularla.
-    - Si el usuario pide opinión, aclara que no puedes opinar y responde con datos
-    del contexto.
-    - Si el usuario pide algo que no está en el documento, dilo claramente.
-    Tu objetivo es ser útil, exacto y seguro.
-    </sistema>
-    <contexto>
-    Información recuperada del documento (RAG):
-    {context}
-    </contexto>
-    <historial>
-    Resumen del historial de la conversación:
-    {history_text}
-    </historial>
-    <usuario>
-    Pregunta del usuario:
-    {query}
-    </usuario>
-    <asistente>
-    Genera la mejor respuesta posible siguiendo todas las reglas anteriores.
-    </asistente>
-    """
-    # Obtenemos la respuesta del modelo
-    answer = llm.invoke(prompt)
-    # Guardamos el turno completo (Pregunta y Respuesta) al mismo tiempo
+    if not history_text.strip():
+        history_text = "Sin historial previo."
+
+    # Formatear el prompt usando la estructura de mensajes de LangChain
+    messages = prompt_template.format_messages(
+        context=context,
+        history=history_text,
+        query=query
+    )
+    
+    # Invocar el LLM con los mensajes formateados
+    answer = llm.invoke(messages)
+    
+    # Guardar el turno en la memoria
     historial_conversacion.append({"usuario": query, "asistente": answer})
     return answer
 
