@@ -91,6 +91,7 @@ index, embeddings, llm = iniciar_componentes()
 for msg in st.session_state.mensajes:
     with st.chat_message(msg["rol"]):
         st.write(msg["texto"])
+    st.session_state.mensajes.append({"rol": "assistant", "texto": saludo_inicial})
 
 # Entrada del usuario
 if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
