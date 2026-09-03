@@ -199,13 +199,13 @@ def rag_query(query, k=4):
     # Normalizar la entrada convirtiendo a minúsculas y quitar espacios sobrantes
     q_norm = query.strip().lower()
     # Elimino signos de interrogación y exclamación
-    for char in ["!", "¡", "?", "¿", ".", ","]:
+    for char in ["!", "¡", "?", "¿", ".", ",", ";", ":"]:
         q_norm = q_norm.replace(char, "")
     q_norm = q_norm.strip()
 
-    # Hay que atender a los saludos por parte del usuario.
-    saludos = ["hola", "buenas", "buenas tardes", "buenas noches", "buenos dias"]
-    if any(saludo in q_norm for saludo in saludos):
+    # Comprobar si el mensaje es ÚNICAMENTE un saludo o empieza por uno
+    saludos = ["hola", "buenas", "buenas tardes", "buenas noches", "buenos dias", "saludos", "que tal"]
+    if any(q_norm == saludo or q_norm.startswith(saludo + " ") for saludo in saludos):
         respuesta = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica. ¿En qué te puedo ayudar hoy?"
         historial_conversacion.append({"usuario": query, "asistente": respuesta})
         return respuesta
