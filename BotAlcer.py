@@ -10,17 +10,19 @@
 # -----------------
 
 import os
+import warnings
 from getpass import getpass
 from dotenv import load_dotenv
 from pinecone import Pinecone, ServerlessSpec
-# La libería PyPDFLoader genera un DeprecationWarning y queremos que no aparezca.
-import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import OllamaLLM
 from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
+import streamlit as st
+
+# La libería PyPDFLoader genera un DeprecationWarning y queremos que no aparezca.
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 
@@ -142,12 +144,17 @@ llm = OllamaLLM(model="llama3.2:1b", temperature=0.2, base_url="http://172.17.0.
 # llm = OllamaLLM(model="llama3.2:1b", temperature=0.2, base_url="http://127.0.0.1:11434")
 
 
+
 # --------------------------------
 # 7. Memoria para la conversación
 # --------------------------------
 
-# Esta lista, inicialmente vacía, se usará para almacenar la conversacion entre usuario y asistente
-historial_conversacion = []
+# En Streamlit inicializamos el historial dentro de st.session_state para que persista
+if "historial_conversacion" not in st.session_state:
+    st.session_state.historial_conversacion = []
+
+# Referencia directa a la memoria cargada
+historial_conversacion = st.session_state.historial_conversacion
 
 
 
@@ -191,27 +198,28 @@ def rag_query(query, k=4):
     # Primeramente vamos a realizar unos pasos previos de normalización y filtro de las entradas del usuario.
     # Normalizar la entrada convirtiendo a minúsculas y quitar espacios sobrantes
     q_norm = query.strip().lower()
+    # Elimino signos de interrogación y exclamación
+    for char in ["!", "¡", "?", "¿", ".", ","]:
+        q_norm = q_norm.replace(char, "")
+    q_norm = q_norm.strip()
 
     # Hay que atender a los saludos por parte del usuario.
     saludos = ["hola", "buenas", "buenas tardes", "buenas noches", "buenos dias"]
-    if q_norm in saludos:
+    if any(saludo in q_norm for saludo in saludos):
         respuesta = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica. ¿En qué te puedo ayudar hoy?"
-        print(f"\nBotAlcer:\n{respuesta}\n")
         historial_conversacion.append({"usuario": query, "asistente": respuesta})
         return respuesta
 
     # Hay tratar qué responder ante peticiones del usuario relacionadas con salir del chatbot.
-    palabras_salida = ["salir", "como salgo?", "como salgo", "adios", "chao", "cancelar"]
-    if q_norm in palabras_salida:
+    palabras_salida = ["salir", "como salgo", "adios", "chao", "cancelar"]
+    if any(salida in q_norm for salida in palabras_salida):
         respuesta = "BotAlcer se despide de ti. ¡Hasta pronto!"
-        print(f"\nBotAlcer:\n{respuesta}\n")
-        return "SALIR"    
+        return respuesta
 
     # Tenemos que dar respuesta al usuario que se siente agradecido.
-    agradecimientos = ["gracias", "muchas gracias", "ok gracias", "gracias!", "perfecto gracias"]
-    if q_norm in agradecimientos:
+    agradecimientos = ["gracias", "muchas gracias", "ok gracias", "perfecto gracias"]
+    if any(agradecimiento in q_norm for agradecimiento in agradecimientos):
         respuesta = "¡De nada! Estoy siempre a disposición para cualquier duda que tengas sobre la Enfermedad Renal Crónica o ALCER."
-        print(f"\nBotAlcer:\n{respuesta}\n")
         historial_conversacion.append({"usuario": query, "asistente": respuesta})
         return respuesta
 
@@ -220,18 +228,18 @@ def rag_query(query, k=4):
     res = index.query(vector=qvec, top_k=k, include_metadata=True)
     
     # Comprobar si hay coincidencias
-    if not res["matches"]:
+    if not res.get("matches"):
         return "O tu pregunta no está bien formulada o no encontré información adecuada sobre tu pregunta para poder responderte."
     
     # Filtrar por similitud mínima de 0.35 y ordenar descendentemente por score
-        matches = [m for m in res["matches"] if m["score"] > 0.35]
+    matches = [m for m in res["matches"] if m["score"] > 0.35]
     matches = sorted(matches, key=lambda x: x["score"], reverse=True)[:k]
     
     if not matches:
         return "O tu pregunta no está bien formulada o no encontré información adecuada en el documento para poder responderte."
     
     # Construir el contexto concatenando los chunks recuperados
-    context = "\n\n".join(m["metadata"]["text"] for m in matches)
+    context = "\n\n".join(m["metadata"].get("text", "") for m in matches)
     
     # Construir el historial resumido
     history_text = ""
@@ -248,16 +256,13 @@ def rag_query(query, k=4):
         query=query
     )
 
-    # Responde todo de golpe....
-    # Invocar el LLM con los mensajes formateados
-    # answer = llm.invoke(messages)
-
     # Respuesta por Streaming (Escribe palabra a palabra en tiempo real)
     print("\nBotAlcer:")
     full_response = ""
     for chunk in llm.stream(messages):
-        print(chunk, end="", flush=True)
-        full_response += chunk
+        content = chunk.content if hasattr(chunk, 'content') else str(chunk)
+        print(content, end="", flush=True)
+        full_response += content
     print("\n")
     
     # Guardar el turno en la memoria
@@ -297,14 +302,32 @@ if __name__ == "__main__":
 # 10. Chat interactivo con opción SALIR para concluir
 # ----------------------------------------------------
 
-if __name__ == "__main__":
-    print("\n¡Bienvenido a BotAlcer, tu asistente personal sobre la Enfermedad Renal Crónica!")
-    while True:
-        pregunta = input("¿En qué te puedo ayudar?   ")
-        # Opción para terminar la ejecución
-        if pregunta.strip().upper() == "SALIR":
-            print("BotAlcer se despide de ti. ¡Hasta pronto!")
-            break
-        respuesta = rag_query(pregunta)
-        #BotAlcer va respondiendo en tiempo real. Si quisiéramos que respondiese todo de golpe, descomentaríamos la siguiente línea.
-        #print("\nBotAlcer:\n", respuesta, "\n")
+# En local...
+# if __name__ == "__main__":
+#     print("\n¡Bienvenido a BotAlcer, tu asistente personal sobre la Enfermedad Renal Crónica!")
+#     while True:
+#         pregunta = input("¿En qué te puedo ayudar?   ")
+#         # Opción para terminar la ejecución
+#         if pregunta.strip().upper() == "SALIR":
+#             print("BotAlcer se despide de ti. ¡Hasta pronto!")
+#             break
+#         respuesta = rag_query(pregunta)
+#         #BotAlcer va respondiendo en tiempo real. Si quisiéramos que respondiese todo de golpe, descomentaríamos la siguiente línea.
+#         #print("\nBotAlcer:\n", respuesta, "\n")
+
+
+# En Streamlit...
+st.title("BotAlcer")
+st.write("¡Bienvenido a BotAlcer, tu asistente personal sobre la Enfermedad Renal Crónica!")
+
+# Renderizar todos los mensajes guardados en la memoria
+for mensaje in st.session_state.historial_conversacion:
+    with st.chat_message("user"):
+        st.markdown(mensaje["usuario"])
+    with st.chat_message("assistant"):
+        st.markdown(mensaje["asistente"])
+
+if prompt := st.chat_input("¿En qué te puedo ayudar?"):
+    # Genera la respuesta actualiza la sesión y refresca limpiamente
+    rag_query(prompt)
+    st.rerun()
