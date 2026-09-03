@@ -42,7 +42,10 @@ if not PINECONE_API_KEY:
 
 ollama_url = os.getenv("OLLAMA_HOST")
 # Mistral es el LLM
+
 embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url="http://172.17.0.1:11434")
+# En local ponemos 127.0.0.1
+# embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url="http://127.0.0.1:11434")
 
 
 
@@ -134,9 +137,9 @@ else:
 # Si la temperaturas es 0.0, las respuestas que obtendremos serán siempre las mismas para la misma pregunta.
 # Con la temperatura a 0.2 para que de respuestas casi idénticas
 # Si queremos respuestas más variadas, podemos subir la temperatura a 0.6 o 0.8, pero cuidado con respuestas incoherentes.
-#llm = OllamaLLM(model="mistral", temperature=0.2)
-llm = OllamaLLM(model="llama3.2:1b", temperature=0.2, base_url="http://172.17.0.1:11434")   # <- Ajusta esta URL según corresponda (localhost, 172.17.0.1 o IP publica)
 
+llm = OllamaLLM(model="llama3.2:1b", temperature=0.2, base_url="http://172.17.0.1:11434")
+# llm = OllamaLLM(model="llama3.2:1b", temperature=0.2, base_url="http://127.0.0.1:11434")
 
 
 # --------------------------------
@@ -185,6 +188,33 @@ prompt_template = ChatPromptTemplate.from_messages([
 
 
 def rag_query(query, k=4):
+    # Primeramente vamos a realizar unos pasos previos de normalización y filtro de las entradas del usuario.
+    # Normalizar la entrada convirtiendo a minúsculas y quitar espacios sobrantes
+    q_norm = query.strip().lower()
+
+    # Hay que atender a los saludos por parte del usuario.
+    saludos = ["hola", "buenas", "buenas tardes", "buenas noches", "buenos dias"]
+    if q_norm in saludos:
+        respuesta = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica. ¿En qué te puedo ayudar hoy?"
+        print(f"\nBotAlcer:\n{respuesta}\n")
+        historial_conversacion.append({"usuario": query, "asistente": respuesta})
+        return respuesta
+
+    # Hay tratar qué responder ante peticiones del usuario relacionadas con salir del chatbot.
+    palabras_salida = ["salir", "como salgo?", "como salgo", "adios", "chao", "cancelar"]
+    if q_norm in palabras_salida:
+        respuesta = "BotAlcer se despide de ti. ¡Hasta pronto!"
+        print(f"\nBotAlcer:\n{respuesta}\n")
+        return "SALIR"    
+
+    # Tenemos que dar respuesta al usuario que se siente agradecido.
+    agradecimientos = ["gracias", "muchas gracias", "ok gracias", "gracias!", "perfecto gracias"]
+    if q_norm in agradecimientos:
+        respuesta = "¡De nada! Estoy siempre a disposición para cualquier duda que tengas sobre la Enfermedad Renal Crónica o ALCER."
+        print(f"\nBotAlcer:\n{respuesta}\n")
+        historial_conversacion.append({"usuario": query, "asistente": respuesta})
+        return respuesta
+
     # Generar embedding de la consulta del usuario
     qvec = embeddings.embed_query(query)
     res = index.query(vector=qvec, top_k=k, include_metadata=True)
@@ -193,8 +223,8 @@ def rag_query(query, k=4):
     if not res["matches"]:
         return "O tu pregunta no está bien formulada o no encontré información adecuada sobre tu pregunta para poder responderte."
     
-    # Filtrar por similitud mínima de 0.3 y ordenar descendentemente por score
-    matches = [m for m in res["matches"] if m["score"] > 0.3]
+    # Filtrar por similitud mínima de 0.35 y ordenar descendentemente por score
+        matches = [m for m in res["matches"] if m["score"] > 0.35]
     matches = sorted(matches, key=lambda x: x["score"], reverse=True)[:k]
     
     if not matches:
@@ -217,13 +247,22 @@ def rag_query(query, k=4):
         history=history_text,
         query=query
     )
-    
+
+    # Responde todo de golpe....
     # Invocar el LLM con los mensajes formateados
-    answer = llm.invoke(messages)
+    # answer = llm.invoke(messages)
+
+    # Respuesta por Streaming (Escribe palabra a palabra en tiempo real)
+    print("\nBotAlcer:")
+    full_response = ""
+    for chunk in llm.stream(messages):
+        print(chunk, end="", flush=True)
+        full_response += chunk
+    print("\n")
     
     # Guardar el turno en la memoria
-    historial_conversacion.append({"usuario": query, "asistente": answer})
-    return answer
+    historial_conversacion.append({"usuario": query, "asistente": full_response})
+    return full_response
 
 
 
@@ -267,4 +306,5 @@ if __name__ == "__main__":
             print("BotAlcer se despide de ti. ¡Hasta pronto!")
             break
         respuesta = rag_query(pregunta)
-        print("\nBotAlcer:\n", respuesta, "\n")
+        #BotAlcer va respondiendo en tiempo real. Si quisiéramos que respondiese todo de golpe, descomentaríamos la siguiente línea.
+        #print("\nBotAlcer:\n", respuesta, "\n")
