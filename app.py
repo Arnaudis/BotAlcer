@@ -83,7 +83,8 @@ def iniciar_componentes():
     ollama_url = os.getenv("OLLAMA_HOST", "http://localhost:11434")
     
     embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url=ollama_url)
-    llm = OllamaLLM(model="mistral", temperature=0.2, base_url=ollama_url)
+    #llm = OllamaLLM(model="mistral", temperature=0.2, base_url=ollama_url)
+    llm = OllamaLLM(model="qwen2.5:3b", temperature=0.2, base_url=ollama_url)
     return index, embeddings, llm
 
 index, embeddings, llm = iniciar_componentes()
@@ -101,10 +102,11 @@ if len(st.session_state.mensajes) == 0:
     st.session_state.mensajes.append({"rol": "assistant", "texto": saludo_inicial})
 
 
-# Gestionamos el historial
-for msg in st.session_state.mensajes:
+# Gestionamos el historial sin repetir saludos
+for msg in st.session_state.mensajes[1:]:
     with st.chat_message(msg["rol"]):
         st.write(msg["texto"])
+
 
 
 # Entrada del usuario
