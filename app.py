@@ -11,6 +11,10 @@ load_dotenv()
 # Configuración Inicial de la Página Web
 st.set_page_config(page_title="BotAlcer - Asistente ERC", page_icon="🏥", layout="centered")
 
+# Inicializar historial de conversación
+if "historial_conversacion" not in st.session_state:
+    st.session_state.historial_conversacion = []
+
 # Fondo blanco a través de CSS inyectado (evita que el modo oscuro lo rompa)
 st.markdown(
     """
@@ -66,9 +70,6 @@ with col2:
 st.title("🏥 BotAlcer")
 st.subheader("Asistente experto en Enfermedad Renal Crónica")
 
-# Inicializar historial en la sesión web si no existe
-if "mensajes" not in st.session_state:
-    st.session_state.mensajes = []
 
 # Conexiones BackEnd (Memorizado para no conectarse en cada clic)
 @st.cache_resource
@@ -87,11 +88,24 @@ def iniciar_componentes():
 
 index, embeddings, llm = iniciar_componentes()
 
-# Mostrar el historial de la conversación en la web
+# Inicializar historial si no existe
+if "mensajes" not in st.session_state:
+    st.session_state.mensajes = []
+
+
+# Saludo inicial
+if len(st.session_state.mensajes) == 0:
+    saludo_inicial = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica. ¿En qué te puedo ayudar hoy?"
+    with st.chat_message("assistant"):
+        st.write(saludo_inicial)
+    st.session_state.mensajes.append({"rol": "assistant", "texto": saludo_inicial})
+
+
+# Gestionamos el historial
 for msg in st.session_state.mensajes:
     with st.chat_message(msg["rol"]):
         st.write(msg["texto"])
-    st.session_state.mensajes.append({"rol": "assistant", "texto": saludo_inicial})
+
 
 # Entrada del usuario
 if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
@@ -102,7 +116,8 @@ if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
     
     # Proceso RAG (ahora SOLO tu lógica real)
     with st.spinner("Pensando..."):
-        answer = rag_query(query)   # <-- Aquí se ejecuta tu RAG real con tus DEBUG
+        answer = rag_query(query, llm, st.session_state.historial_conversacion)
+        st.session_state.historial_conversacion.append({"usuario": query, "asistente": answer})
 
     # Mostrar la respuesta del Bot
     with st.chat_message("assistant"):

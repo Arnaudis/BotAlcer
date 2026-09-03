@@ -140,8 +140,7 @@ else:
 # Con la temperatura a 0.2 para que de respuestas casi idénticas
 # Si queremos respuestas más variadas, podemos subir la temperatura a 0.6 o 0.8, pero cuidado con respuestas incoherentes.
 
-llm = OllamaLLM(model="llama3.2:1b", temperature=0.2, base_url="http://172.17.0.1:11434")
-# llm = OllamaLLM(model="llama3.2:1b", temperature=0.2, base_url="http://127.0.0.1:11434")
+# Se llama en app.py (streamlit, el frontend)
 
 
 
@@ -150,11 +149,6 @@ llm = OllamaLLM(model="llama3.2:1b", temperature=0.2, base_url="http://172.17.0.
 # --------------------------------
 
 # En Streamlit inicializamos el historial dentro de st.session_state para que persista
-if "historial_conversacion" not in st.session_state:
-    st.session_state.historial_conversacion = []
-
-# Referencia directa a la memoria cargada
-historial_conversacion = st.session_state.historial_conversacion
 
 
 
@@ -194,64 +188,52 @@ prompt_template = ChatPromptTemplate.from_messages([
 ])
 
 
-def rag_query(query, k=4):
+def rag_query(query, llm, history, k=4):
     # Primeramente vamos a realizar unos pasos previos de normalización y filtro de las entradas del usuario.
     # Normalizar la entrada convirtiendo a minúsculas y quitar espacios sobrantes
     q_norm = query.strip().lower()
-    # Elimino signos de interrogación y exclamación
-    for char in ["!", "¡", "?", "¿", ".", ",", ";", ":"]:
-        q_norm = q_norm.replace(char, "")
-    q_norm = q_norm.strip()
-    # Eliminar saltos de línea y caracteres invisibles
-    q_norm = q_norm.replace("\n", "").replace("\r", "").replace("\t", "")
     
     # Comprobar si el mensaje es ÚNICAMENTE un saludo o empieza por uno
     saludos = ["hola", "buenas", "buenas tardes", "buenas noches", "buenos dias", "saludos", "que tal"]
     if any(q_norm.startswith(saludo) for saludo in saludos):
         respuesta = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica. ¿En qué te puedo ayudar hoy?"
-        st.session_state.historial_conversacion.append({"usuario": query, "asistente": respuesta})
         return respuesta
 
     # Hay tratar qué responder ante peticiones del usuario relacionadas con salir del chatbot.
     palabras_salida = ["salir", "como salgo", "adios", "chao", "cancelar"]
     if any(q_norm.startswith(salida) for salida in palabras_salida):
         respuesta = "BotAlcer se despide de ti. ¡Hasta pronto!"
-        st.session_state.historial_conversacion.append({"usuario": query, "asistente": respuesta})
         return respuesta
 
     # Tenemos que dar respuesta al usuario que se siente agradecido.
     agradecimientos = ["gracias", "muchas gracias", "ok gracias", "perfecto gracias"]
     if any(q_norm.startswith(agradecimiento) for agradecimiento in agradecimientos):
         respuesta = "¡De nada! Estoy siempre a disposición para cualquier duda que tengas sobre la Enfermedad Renal Crónica o ALCER."
-        st.session_state.historial_conversacion.append({"usuario": query, "asistente": respuesta})
         return respuesta
 
     # Generar embedding de la consulta del usuario
     qvec = embeddings.embed_query(query)
-    res = index.query(vector=qvec, top_k=k, include_metadata=True)
+    res = index.query(vector=qvec, top_k=8, include_metadata=True)
 
     Mensaje="O tu pregunta no está bien formulada o no encontré información adecuada sobre tu pregunta para poder responderte."
     # Comprobar si hay coincidencias
     if not res.get("matches"):
-        st.session_state.historial_conversacion.append({"usuario": query, "asistente": Mensaje})
         return Mensaje
     
-    # Filtrar por similitud mínima de 0.15
-    matches = [m for m in res["matches"] if m["score"] > 0.15]
+    # Filtrar por similitud mínima de 0.12
+    matches = [m for m in res["matches"] if m["score"] > 0.12]
     matches = sorted(matches, key=lambda x: x["score"], reverse=True)[:k]
     
     if not matches:
-        st.session_state.historial_conversacion.append({"usuario": query, "asistente": Mensaje})
         return Mensaje
     
     # Construir el contexto concatenando los chunks recuperados
     context = "\n\n".join(m["metadata"].get("text", "") for m in matches)
-    
-    # Construir el historial resumido
+
     history_text = ""
-    for i in st.session_state.historial_conversacion[-4:]:
+    for i in history[-4:]:
         history_text += f"Usuario: {i['usuario']}\nAsistente: {i['asistente']}\n\n"
-    
+
     if not history_text.strip():
         history_text = "Sin historial previo."
 
@@ -271,8 +253,6 @@ def rag_query(query, k=4):
         full_response += content
     print("\n")
     
-    # Guardar el turno en la memoria
-    st.session_state.historial_conversacion.append({"usuario": query, "asistente": full_response})
     return full_response
 
 
