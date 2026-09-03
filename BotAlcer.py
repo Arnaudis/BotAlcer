@@ -202,24 +202,26 @@ def rag_query(query, k=4):
     for char in ["!", "¡", "?", "¿", ".", ",", ";", ":"]:
         q_norm = q_norm.replace(char, "")
     q_norm = q_norm.strip()
-
+    # Eliminar saltos de línea y caracteres invisibles
+    q_norm = q_norm.replace("\n", "").replace("\r", "").replace("\t", "")
+    
     # Comprobar si el mensaje es ÚNICAMENTE un saludo o empieza por uno
     saludos = ["hola", "buenas", "buenas tardes", "buenas noches", "buenos dias", "saludos", "que tal"]
-    if any(q_norm == saludo or q_norm.startswith(saludo + " ") for saludo in saludos):
+    if any(q_norm.startswith(saludo) for saludo in saludos):
         respuesta = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica. ¿En qué te puedo ayudar hoy?"
         historial_conversacion.append({"usuario": query, "asistente": respuesta})
         return respuesta
 
     # Hay tratar qué responder ante peticiones del usuario relacionadas con salir del chatbot.
     palabras_salida = ["salir", "como salgo", "adios", "chao", "cancelar"]
-    if any(salida in q_norm for salida in palabras_salida):
+    if any(q_norm.startswith(salida) for salida in palabras_salida):
         respuesta = "BotAlcer se despide de ti. ¡Hasta pronto!"
         historial_conversacion.append({"usuario": query, "asistente": respuesta})
         return respuesta
 
     # Tenemos que dar respuesta al usuario que se siente agradecido.
     agradecimientos = ["gracias", "muchas gracias", "ok gracias", "perfecto gracias"]
-    if any(agradecimiento in q_norm for agradecimiento in agradecimientos):
+    if any(q_norm.startswith(agradecimiento) for agradecimiento in agradecimientos):
         respuesta = "¡De nada! Estoy siempre a disposición para cualquier duda que tengas sobre la Enfermedad Renal Crónica o ALCER."
         historial_conversacion.append({"usuario": query, "asistente": respuesta})
         return respuesta
