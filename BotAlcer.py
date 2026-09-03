@@ -214,6 +214,7 @@ def rag_query(query, k=4):
     palabras_salida = ["salir", "como salgo", "adios", "chao", "cancelar"]
     if any(salida in q_norm for salida in palabras_salida):
         respuesta = "BotAlcer se despide de ti. ¡Hasta pronto!"
+        historial_conversacion.append({"usuario": query, "asistente": respuesta})
         return respuesta
 
     # Tenemos que dar respuesta al usuario que se siente agradecido.
@@ -226,17 +227,20 @@ def rag_query(query, k=4):
     # Generar embedding de la consulta del usuario
     qvec = embeddings.embed_query(query)
     res = index.query(vector=qvec, top_k=k, include_metadata=True)
-    
+
+    Mensaje="O tu pregunta no está bien formulada o no encontré información adecuada sobre tu pregunta para poder responderte."
     # Comprobar si hay coincidencias
     if not res.get("matches"):
-        return "O tu pregunta no está bien formulada o no encontré información adecuada sobre tu pregunta para poder responderte."
+        historial_conversacion.append({"usuario": query, "asistente": Mensaje})
+        return Mensaje
     
     # Filtrar por similitud mínima de 0.35 y ordenar descendentemente por score
     matches = [m for m in res["matches"] if m["score"] > 0.35]
     matches = sorted(matches, key=lambda x: x["score"], reverse=True)[:k]
     
     if not matches:
-        return "O tu pregunta no está bien formulada o no encontré información adecuada en el documento para poder responderte."
+        historial_conversacion.append({"usuario": query, "asistente": Mensaje})
+        return Mensaje
     
     # Construir el contexto concatenando los chunks recuperados
     context = "\n\n".join(m["metadata"].get("text", "") for m in matches)
@@ -320,14 +324,22 @@ if __name__ == "__main__":
 st.title("BotAlcer")
 st.write("¡Bienvenido a BotAlcer, tu asistente personal sobre la Enfermedad Renal Crónica!")
 
-# Renderizar todos los mensajes guardados en la memoria
+# Renderizar el historial acumulado previamente
 for mensaje in st.session_state.historial_conversacion:
     with st.chat_message("user"):
         st.markdown(mensaje["usuario"])
     with st.chat_message("assistant"):
         st.markdown(mensaje["asistente"])
 
+# Guardamos y procesamos la nueva pregunta que haga el usuario
 if prompt := st.chat_input("¿En qué te puedo ayudar?"):
-    # Genera la respuesta actualiza la sesión y refresca limpiamente
-    rag_query(prompt)
-    st.rerun()
+    # Muestra inmediatamente el mensaje del usuario en pantalla
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Genera la respuesta (la función rag_query ya la guarda en st.session_state)
+    respuesta = rag_query(prompt)
+
+    # Muestra inmediatamente la respuesta en pantalla
+    with st.chat_message("assistant"):
+        st.markdown(respuesta)
