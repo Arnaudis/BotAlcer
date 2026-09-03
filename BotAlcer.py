@@ -209,21 +209,21 @@ def rag_query(query, k=4):
     saludos = ["hola", "buenas", "buenas tardes", "buenas noches", "buenos dias", "saludos", "que tal"]
     if any(q_norm.startswith(saludo) for saludo in saludos):
         respuesta = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica. ¿En qué te puedo ayudar hoy?"
-        historial_conversacion.append({"usuario": query, "asistente": respuesta})
+        st.session_state.historial_conversacion.append({"usuario": query, "asistente": respuesta})
         return respuesta
 
     # Hay tratar qué responder ante peticiones del usuario relacionadas con salir del chatbot.
     palabras_salida = ["salir", "como salgo", "adios", "chao", "cancelar"]
     if any(q_norm.startswith(salida) for salida in palabras_salida):
         respuesta = "BotAlcer se despide de ti. ¡Hasta pronto!"
-        historial_conversacion.append({"usuario": query, "asistente": respuesta})
+        st.session_state.historial_conversacion.append({"usuario": query, "asistente": respuesta})
         return respuesta
 
     # Tenemos que dar respuesta al usuario que se siente agradecido.
     agradecimientos = ["gracias", "muchas gracias", "ok gracias", "perfecto gracias"]
     if any(q_norm.startswith(agradecimiento) for agradecimiento in agradecimientos):
         respuesta = "¡De nada! Estoy siempre a disposición para cualquier duda que tengas sobre la Enfermedad Renal Crónica o ALCER."
-        historial_conversacion.append({"usuario": query, "asistente": respuesta})
+        st.session_state.historial_conversacion.append({"usuario": query, "asistente": respuesta})
         return respuesta
 
     # Generar embedding de la consulta del usuario
@@ -233,7 +233,7 @@ def rag_query(query, k=4):
     Mensaje="O tu pregunta no está bien formulada o no encontré información adecuada sobre tu pregunta para poder responderte."
     # Comprobar si hay coincidencias
     if not res.get("matches"):
-        historial_conversacion.append({"usuario": query, "asistente": Mensaje})
+        st.session_state.historial_conversacion.append({"usuario": query, "asistente": Mensaje})
         return Mensaje
     
     # Filtrar por similitud mínima de 0.35 y ordenar descendentemente por score
@@ -241,7 +241,7 @@ def rag_query(query, k=4):
     matches = sorted(matches, key=lambda x: x["score"], reverse=True)[:k]
     
     if not matches:
-        historial_conversacion.append({"usuario": query, "asistente": Mensaje})
+        st.session_state.historial_conversacion.append({"usuario": query, "asistente": Mensaje})
         return Mensaje
     
     # Construir el contexto concatenando los chunks recuperados
@@ -249,7 +249,7 @@ def rag_query(query, k=4):
     
     # Construir el historial resumido
     history_text = ""
-    for i in historial_conversacion[-4:]:
+    for i in st.session_state.historial_conversacion[-4:]:
         history_text += f"Usuario: {i['usuario']}\nAsistente: {i['asistente']}\n\n"
     
     if not history_text.strip():
@@ -272,7 +272,7 @@ def rag_query(query, k=4):
     print("\n")
     
     # Guardar el turno en la memoria
-    historial_conversacion.append({"usuario": query, "asistente": full_response})
+    st.session_state.historial_conversacion.append({"usuario": query, "asistente": full_response})
     return full_response
 
 
@@ -325,6 +325,10 @@ if __name__ == "__main__":
 # En Streamlit...
 st.title("BotAlcer")
 st.write("¡Bienvenido a BotAlcer, tu asistente personal sobre la Enfermedad Renal Crónica!")
+
+# Inicializamos el historial de la conversación
+if "historial_conversacion" not in st.session_state:
+    st.session_state.historial_conversacion = []
 
 # Renderizar el historial acumulado previamente
 for mensaje in st.session_state.historial_conversacion:
