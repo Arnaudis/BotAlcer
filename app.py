@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from pinecone import Pinecone
 from langchain_ollama import OllamaLLM
 from langchain_community.embeddings import OllamaEmbeddings
+from BotAlcer import rag_query   # <-- Importo tu lógica real
 
 load_dotenv()
 
@@ -98,35 +99,10 @@ if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
         st.write(query)
     st.session_state.mensajes.append({"rol": "user", "texto": query})
     
-    # Proceso RAG
+    # Proceso RAG (ahora SOLO tu lógica real)
     with st.spinner("Pensando..."):
-        qvec = embeddings.embed_query(query)
-        res = index.query(vector=qvec, top_k=4, include_metadata=True)
-        
-        matches = [m for m in res["matches"] if m["score"] > 0.5] if res["matches"] else []
-        
-        if not matches:
-            answer = "No encontré información adecuada en los documentos para responder a tu pregunta."
-        else:
-            context = "\n\n".join(m["metadata"]["text"] for m in matches[:4])
-            
-            # Construir el hilo del historial estructurado para el Prompt
-            history_text = ""
-            for m in st.session_state.mensajes[:-1]: # Excluyendo la última pregunta recién añadida
-                rol_tag = "Usuario" if m["rol"] == "user" else "Asistente"
-                history_text += f"{rol_tag}: {m['texto']}\n"
+        answer = rag_query(query)   # <-- Aquí se ejecuta tu RAG real con tus DEBUG
 
-            prompt = f"""
-            <sistema>
-            Eres BotAlcer, un asistente experto en Enfermedad Renal Crónica. Responde basándote EXCLUSIVAMENTE en el contexto RAG y el historial proporcionado.
-            </sistema>
-            <contexto>{context}</contexto>
-            <historial>{history_text}</historial>
-            <usuario>{query}</usuario>
-            <asistente>
-            """
-            answer = llm.invoke(prompt)
-            
     # Mostrar la respuesta del Bot
     with st.chat_message("assistant"):
         st.write(answer)
