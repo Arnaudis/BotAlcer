@@ -10,7 +10,7 @@ services:
 
   streamlit:
     build: .
-    container_name: botalcer
+    container_name: botalcer_contenedor
     ports:
       - "8501:8501"
     environment:
