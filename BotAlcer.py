@@ -54,7 +54,7 @@ def inicializar_recursos_rag():
 
 
     pc = Pinecone(api_key=PINECONE_API_KEY)
-    index_name = "botalcer"
+    index_name = "botalcer-mistral"
     index = pc.Index(index_name)
 
     # Si fueramos a cargar varios PDFs...
