@@ -1,10 +1,8 @@
 import streamlit as st
 import os
 from dotenv import load_dotenv
-from pinecone import Pinecone
 from langchain_ollama import OllamaLLM
-from langchain_community.embeddings import OllamaEmbeddings
-from BotAlcer import rag_query   # <-- Importo tu lógica real
+from BotAlcer import inicializar_recursos_rag, rag_query
 
 load_dotenv()
 
@@ -14,6 +12,11 @@ st.set_page_config(page_title="BotAlcer - Asistente ERC", page_icon="🏥", layo
 # Inicializar historial de conversación
 if "historial_conversacion" not in st.session_state:
     st.session_state.historial_conversacion = []
+
+if "mensajes" not in st.session_state:
+    saludo_inicial = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica. ¿En qué te puedo ayudar hoy?"
+    st.session_state.mensajes = [{"rol": "assistant", "texto": saludo_inicial}]
+
 
 # Fondo blanco a través de CSS inyectado (evita que el modo oscuro lo rompa)
 st.markdown(
@@ -40,14 +43,14 @@ st.markdown(
 
     /* Personalizamos la entrada de texto del usuario */
     [data-testid="stChatInput"] {
-        border: 5px solid #009837 !important;
-        border-radius: 15px !important;
+        border: 2px solid #009837 !important;
+        border-radius: 12px !important;
         background-color: #ffffff !important;
     }
 
     [data-testid="stChatInput"] textarea {
-        background-color: #009837 !important;
-        color: #000000 !important;
+        background-color: #ffffff !important;
+        color: #1e3a8a !important;
     }
     </style>
     """,
@@ -74,40 +77,23 @@ st.subheader("Asistente experto en Enfermedad Renal Crónica")
 # Conexiones BackEnd (Memorizado para no conectarse en cada clic)
 @st.cache_resource
 def iniciar_componentes():
-    PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-    pc = Pinecone(api_key=PINECONE_API_KEY)
-    index = pc.Index("botalcer-mistral")
-    
-    # IMPORTANTE para Docker: Si Ollama corre fuera del contenedor (ej. en tu PC), 
-    # se suele configurar OLLAMA_HOST en las variables de entorno.
+    # Inicializa Pinecone, Embeddings y verifica el índice en botalcer.py
+    index, embeddings = inicializar_recursos_rag()
+
+    # Inicializa el LLM
     ollama_url = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-    
-    embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url=ollama_url)
-    #llm = OllamaLLM(model="mistral", temperature=0.2, base_url=ollama_url)
     llm = OllamaLLM(model="qwen2.5:3b", temperature=0.2, base_url=ollama_url)
+
     return index, embeddings, llm
 
+# Se ejecuta una sola vez al arrancar la app o cuando la caché vence
 index, embeddings, llm = iniciar_componentes()
 
-# Inicializar historial si no existe
-if "mensajes" not in st.session_state:
-    st.session_state.mensajes = []
 
-
-# Saludo inicial
-if len(st.session_state.mensajes) == 0:
-    saludo_inicial = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica. ¿En qué te puedo ayudar hoy?"
-    with st.chat_message("assistant"):
-        st.write(saludo_inicial)
-    st.session_state.mensajes.append({"rol": "assistant", "texto": saludo_inicial})
-
-
-# Gestionamos el historial sin repetir saludos
-for msg in st.session_state.mensajes[1:]:
+# Renderizar todo el historial en pantalla
+for msg in st.session_state.mensajes:
     with st.chat_message(msg["rol"]):
         st.write(msg["texto"])
-
-
 
 # Entrada del usuario
 if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
@@ -118,7 +104,7 @@ if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
     
     # Proceso RAG (ahora SOLO tu lógica real)
     with st.spinner("Pensando..."):
-        answer = rag_query(query, llm, st.session_state.historial_conversacion)
+        answer = rag_query(query, llm, st.session_state.historial_conversacion,index,embeddings,)
         st.session_state.historial_conversacion.append({"usuario": query, "asistente": answer})
 
     # Mostrar la respuesta del Bot

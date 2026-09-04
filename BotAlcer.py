@@ -39,97 +39,89 @@ if not PINECONE_API_KEY:
 
 
 # -------------------------------------------
-# 3. Embeddings en nomic-embed-text (Ollama)
+# 3. Pinecone y Embeddings en nomic-embed-text (Ollama)
 # -------------------------------------------
 
-ollama_url = os.getenv("OLLAMA_HOST")
-# Mistral es el LLM
+def inicializar_recursos_rag():
+    PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+    if not PINECONE_API_KEY:
+        PINECONE_API_KEY = getpass("Introduce tu Pinecone API Key: ")
+        os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
 
-embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url="http://172.17.0.1:11434")
-# En local ponemos 127.0.0.1
-# embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url="http://127.0.0.1:11434")
-
-
-
-# ---------------------------
-# 4. Preparación de Pinecone
-# ---------------------------
-
-pc = Pinecone(api_key=PINECONE_API_KEY)
-index_name = "botalcer-mistral"
-
-# Se conecta directamente al índice para evitar consultas adicionales a la API
-index = pc.Index(index_name)
-
-
-
-# -----------------------------------------------
-# 5. Carga de Información y Subida a Pinecone
-# -----------------------------------------------
-
-# Si fueramos a cargar varios PDFs...
-"""
-PDF_PATH_1 = "1_Certificado de discapacidad.pdf"  # <-- cámbialo
-PDF_PATH_2 = "2_Gestion de dialisis.pdf"
-PDF_PATH_3 = "3_Grado de dependencia.pdf"
-PDF_PATH_4 = "4_Incapacidad permanente.pdf"
-PDF_PATH_5 = "5_Otras actividades.pdf"
-PDF_PATH_6 = "6_Pensiones No Contributivas.pdf"
-loader_1 = PyPDFLoader(PDF_PATH_1)
-loader_2 = PyPDFLoader(PDF_PATH_2)
-loader_3 = PyPDFLoader(PDF_PATH_3)
-loader_4 = PyPDFLoader(PDF_PATH_4)
-loader_5 = PyPDFLoader(PDF_PATH_5)
-loader_6 = PyPDFLoader(PDF_PATH_6)
-raw_docs_1 = loader_1.load()
-raw_docs_2 = loader_2.load()
-raw_docs_3 = loader_3.load()
-raw_docs_4 = loader_4.load()
-raw_docs_5 = loader_5.load()
-raw_docs_6 = loader_6.load()
-raw_docs = raw_docs_1 + raw_docs_2 + raw_docs_3 + raw_docs_4 + raw_docs_5 + raw_docs_6
-"""
-
-# Subir a Pinecone solo si el índice está vacío.
-if index.describe_index_stats()["total_vector_count"] == 0:
-    print("El índice está vacío. Cargando PDF y subiendo documentos...")
-    
-    # PDF unificado con la información de los servicios
-    PDF_PATH = "0_Informacion_Servicios.pdf"
-    loader = PyPDFLoader(PDF_PATH)
-    raw_docs = loader.load()
-    
-    # El chunk es la partición del texto en trozos más pequeñas. Hacemos que cada trozo tenga 1000 caracteres, 
-    # con un solapamiento de 200 caracteres entre ellos, que es el chunk_overlap. Esto ayuda a mantener el contexto cuando se dividen los documentos.
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200
+    # Usamos la variable de entorno unificada para Ollama (Solución al Problema 1 y 2)
+    ollama_url = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+    embeddings = OllamaEmbeddings(
+        model="nomic-embed-text", base_url=ollama_url
     )
-    docs = splitter.split_documents(raw_docs)
-    print("Chunks generados:", len(docs))
-    
-    # Extraer todos los textos de una vez para acelerar los embeddings
-    texts = [d.page_content for d in docs]
-    vecs = embeddings.embed_documents(texts)
-    
-    vectors = []
-    for i, (d, vec) in enumerate(zip(docs, vecs)):
-        vectors.append({
-            # Un id que será único por chunk.
-            "id": f"{PDF_PATH}_page_{d.metadata.get('page', 0)}_chunk_{i}",
-            "values": vec,
-            "metadata": {
-                # Texto del chunk, número de página (si está disponible) y fuente del documento.
-                "text": d.page_content,
-                "page": d.metadata.get("page", None),
-                "source": d.metadata.get("source", PDF_PATH)
-            }
-        })
-    index.upsert(vectors=vectors)
-    print("Documentos subidos a Pinecone:", len(vectors))
-else:
-    print("El índice de Pinecone ya contiene datos. Omitiendo lectura de PDF y subida.")
 
+    pc = Pinecone(api_key=PINECONE_API_KEY)
+    index_name = "botalcer"
+    index = pc.Index(index_name)
+
+    # Si fueramos a cargar varios PDFs...
+    """
+    PDF_PATH_1 = "1_Certificado de discapacidad.pdf"  # <-- cámbialo
+    PDF_PATH_2 = "2_Gestion de dialisis.pdf"
+    PDF_PATH_3 = "3_Grado de dependencia.pdf"
+    PDF_PATH_4 = "4_Incapacidad permanente.pdf"
+    PDF_PATH_5 = "5_Otras actividades.pdf"
+    PDF_PATH_6 = "6_Pensiones No Contributivas.pdf"
+    loader_1 = PyPDFLoader(PDF_PATH_1)
+    loader_2 = PyPDFLoader(PDF_PATH_2)
+    loader_3 = PyPDFLoader(PDF_PATH_3)
+    loader_4 = PyPDFLoader(PDF_PATH_4)
+    loader_5 = PyPDFLoader(PDF_PATH_5)
+    loader_6 = PyPDFLoader(PDF_PATH_6)
+    raw_docs_1 = loader_1.load()
+    raw_docs_2 = loader_2.load()
+    raw_docs_3 = loader_3.load()
+    raw_docs_4 = loader_4.load()
+    raw_docs_5 = loader_5.load()
+    raw_docs_6 = loader_6.load()
+    raw_docs = raw_docs_1 + raw_docs_2 + raw_docs_3 + raw_docs_4 + raw_docs_5 + raw_docs_6
+    """
+
+#   Verificación de datos en el índice
+    if index.describe_index_stats()["total_vector_count"] == 0:
+        print("El índice está vacío. Cargando PDF y subiendo documentos...")
+        PDF_PATH = "0_Informacion_Servicios.pdf"
+        if os.path.exists(PDF_PATH):
+            loader = PyPDFLoader(PDF_PATH)
+            raw_docs = loader.load()
+
+            splitter = RecursiveCharacterTextSplitter(
+            # El chunk es la partición del texto en trozos más pequeñas. Hacemos que cada trozo tenga 1000 caracteres, 
+            # con un solapamiento de 200 caracteres entre ellos, que es el chunk_overlap. Esto ayuda a mantener el contexto cuando se dividen los documentos.
+            chunk_size=1000, chunk_overlap=200
+        )
+            docs = splitter.split_documents(raw_docs)
+
+            texts = [d.page_content for d in docs]
+            vecs = embeddings.embed_documents(texts)
+            
+            vectors = []
+            for i, (d, vec) in enumerate(zip(docs, vecs)):
+                vectors.append({
+                    "id": (
+                        f"{PDF_PATH}_page_{d.metadata.get('page', 0)}_chunk_{i}"
+                    ),
+                    "values": vec,
+                    "metadata": {
+                        "text": d.page_content,
+                        "page": d.metadata.get("page", None),
+                        "source": d.metadata.get("source", PDF_PATH),
+                    },
+                })
+            index.upsert(vectors=vectors)
+            print("Documentos subidos a Pinecone:", len(vectors))
+        else:
+            print(f"Advertencia: No se encontró el archivo {PDF_PATH}")
+    else:
+        print(
+            "El índice de Pinecone ya contiene datos. Omitiendo lectura de PDF."
+        )
+
+    return index, embeddings
 
 
 # ----------------------
@@ -188,7 +180,7 @@ prompt_template = ChatPromptTemplate.from_messages([
 ])
 
 
-def rag_query(query, llm, history, k=4):
+def rag_query(query, llm, history, index, embeddings, k=4):
     # Primeramente vamos a realizar unos pasos previos de normalización y filtro de las entradas del usuario.
     # Normalizar la entrada convirtiendo a minúsculas y quitar espacios sobrantes
     q_norm = query.strip().lower()
