@@ -50,7 +50,7 @@ def inicializar_recursos_rag():
 
     # Usamos la variable de entorno unificada para Ollama (Solución al Problema 1 y 2)
     ollama_url = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-    embeddings = OllamaEmbeddings(model="bge-small")
+    embeddings = OllamaEmbeddings(model="nomic-embed-text")
 
 
     pc = Pinecone(api_key=PINECONE_API_KEY)
