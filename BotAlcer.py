@@ -50,9 +50,8 @@ def inicializar_recursos_rag():
 
     # Usamos la variable de entorno unificada para Ollama (Solución al Problema 1 y 2)
     ollama_url = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-    embeddings = OllamaEmbeddings(
-        model="nomic-embed-text", base_url=ollama_url
-    )
+    embeddings = OllamaEmbeddings(model="bge-small")
+
 
     pc = Pinecone(api_key=PINECONE_API_KEY)
     index_name = "botalcer"
@@ -92,7 +91,7 @@ def inicializar_recursos_rag():
             splitter = RecursiveCharacterTextSplitter(
             # El chunk es la partición del texto en trozos más pequeñas. Hacemos que cada trozo tenga 1000 caracteres, 
             # con un solapamiento de 200 caracteres entre ellos, que es el chunk_overlap. Esto ayuda a mantener el contexto cuando se dividen los documentos.
-            chunk_size=1000, chunk_overlap=200
+            chunk_size=600, chunk_overlap=100
         )
             docs = splitter.split_documents(raw_docs)
 
@@ -205,7 +204,7 @@ def rag_query(query, llm, history, index, embeddings, k=4):
 
     # Generar embedding de la consulta del usuario
     qvec = embeddings.embed_query(query)
-    res = index.query(vector=qvec, top_k=8, include_metadata=True)
+    res = index.query(vector=qvec, top_k=3, include_metadata=True)
 
     Mensaje="O tu pregunta no está bien formulada o no encontré información adecuada sobre tu pregunta para poder responderte."
     # Comprobar si hay coincidencias
@@ -223,7 +222,7 @@ def rag_query(query, llm, history, index, embeddings, k=4):
     context = "\n\n".join(m["metadata"].get("text", "") for m in matches)
 
     history_text = ""
-    for i in history[-4:]:
+    for i in history[-2:]:
         history_text += f"Usuario: {i['usuario']}\nAsistente: {i['asistente']}\n\n"
 
     if not history_text.strip():
@@ -236,19 +235,11 @@ def rag_query(query, llm, history, index, embeddings, k=4):
         query=query
     )
 
-    # Respuesta por Streaming (Escribe palabra a palabra en tiempo real)
-    print("\nBotAlcer:")
-    full_response = ""
-    for chunk in llm.stream(messages):
-        content = chunk.content if hasattr(chunk, 'content') else str(chunk)
-        print(content, end="", flush=True)
-        full_response += content
-    print("\n")
+    response = llm.invoke(messages)
+    return response
+
+
     
-    return full_response
-
-
-
 # -------------------
 # 9. Ejemplo de uso
 # -------------------

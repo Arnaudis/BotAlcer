@@ -82,9 +82,9 @@ def iniciar_componentes():
 
     # Inicializa el LLM
     ollama_url = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-    llm = OllamaLLM(model="qwen2.5:3b", temperature=0.2, base_url=ollama_url)
-
+    llm = OllamaLLM(model="qwen2.5:1.5b-instruct", temperature=0.0, base_url=ollama_url, num_ctx=1024)
     return index, embeddings, llm
+
 
 # Se ejecuta una sola vez al arrancar la app o cuando la caché vence
 index, embeddings, llm = iniciar_componentes()
