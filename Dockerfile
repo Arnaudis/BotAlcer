@@ -4,6 +4,9 @@ FROM python:3.11-slim
 # Evitar que Python escriba archivos temporales .pyc y asegurar logs instantáneos
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV OLLAMA_NUM_PARALLEL=1
+ENV OLLAMA_MAX_QUEUE=1
+
 
 WORKDIR /app
 
