@@ -12,7 +12,6 @@
 import os
 import warnings
 from getpass import getpass
-from dotenv import load_dotenv
 from pinecone import Pinecone, ServerlessSpec
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -26,32 +25,18 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 
-# -----------------
-# 2. API de Pinecone
-# -----------------
-
-load_dotenv()
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-if not PINECONE_API_KEY:
-    PINECONE_API_KEY = getpass("Introduce tu Pinecone API Key: ")
-    os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
-
-
-
 # -------------------------------------------
 # 3. Pinecone y Embeddings en nomic-embed-text (Ollama)
 # -------------------------------------------
 
 def inicializar_recursos_rag():
     PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-    if not PINECONE_API_KEY:
-        PINECONE_API_KEY = getpass("Introduce tu Pinecone API Key: ")
-        os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
+    os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
 
     # Usamos la variable de entorno unificada para Ollama (Solución al Problema 1 y 2)
-    ollama_url = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+    ollama_url = os.getenv("OLLAMA_HOST", "http://ollama:11434")
 
-    embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url=ollama_url)
+    embeddings = OllamaEmbeddings(model="mxbai-embed-large", base_url=ollama_url)
 
 
     pc = Pinecone(api_key=PINECONE_API_KEY)
@@ -212,15 +197,15 @@ def rag_query(query, llm, history, index, embeddings, k=4):
     if not res.get("matches"):
         return Mensaje
     
-    # Filtrar por similitud mínima de 0.12
-    matches = [m for m in res["matches"] if m["score"] > 0.12]
+    # Filtrar por similitud mínima de 0.2
+    matches = [m for m in res["matches"] if m["score"] > 0.2]
     matches = sorted(matches, key=lambda x: x["score"], reverse=True)[:k]
     
     if not matches:
         return Mensaje
     
     # Construir el contexto concatenando los chunks recuperados
-    context = "\n\n".join(m["metadata"].get("text", "") for m in matches)
+    context = "\n\n".join(m["metadata"].get("text", "")[:400] for m in matches)
 
     history_text = ""
     for i in history[-2:]:

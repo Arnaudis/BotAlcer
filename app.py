@@ -1,10 +1,8 @@
 import streamlit as st
 import os
-from dotenv import load_dotenv
 from langchain_ollama import OllamaLLM
 from BotAlcer import inicializar_recursos_rag, rag_query
 
-load_dotenv()
 
 # Configuración Inicial de la Página Web
 st.set_page_config(page_title="BotAlcer - Asistente ERC", page_icon="🏥", layout="centered")
@@ -82,7 +80,7 @@ def iniciar_componentes():
 
     # Inicializa el LLM
     ollama_url = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-    llm = OllamaLLM(model="qwen2.5:1.5b-instruct", temperature=0.0, base_url=ollama_url, num_ctx=1024)
+    llm = OllamaLLM(model="qwen2.5:1.5b-instruct", temperature=0.0, base_url=ollama_url, num_ctx=512)
     return index, embeddings, llm
 
 
