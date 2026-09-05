@@ -180,17 +180,16 @@ def rag_query(query, llm, history, index, embeddings, k=4):
     qvec = embeddings.embed_query(query)
     res = index.query(vector=qvec, top_k=3, include_metadata=True)
 
-    Mensaje="O tu pregunta no está bien formulada o no encontré información adecuada sobre tu pregunta para poder responderte."
-    # Comprobar si hay coincidencias
+        # Comprobar si hay coincidencias
     if not res.get("matches"):
-        return Mensaje
+        return "No dispongo información sobre la cuestión solicitada"
     
-    # Filtrar por similitud mínima de 0.2
-    matches = [m for m in res["matches"] if m["score"] > 0.2]
+    # Filtrar por similitud mínima de 0.25
+    matches = [m for m in res["matches"] if m["score"] > 0.25]
     matches = sorted(matches, key=lambda x: x["score"], reverse=True)[:k]
     
     if not matches:
-        return Mensaje
+        return "No dispongo información sobre la cuestión solicitada"
     
     # Construir el contexto concatenando los chunks recuperados
     context = "\n\n".join(m["metadata"].get("text", "")[:400] for m in matches)
@@ -203,11 +202,19 @@ def rag_query(query, llm, history, index, embeddings, k=4):
         history_text = "Sin historial previo."
 
     # Formatear el prompt usando la estructura de mensajes de LangChain
-    messages = prompt_template.format_messages(
-        context=context,
-        history=history_text,
-        query=query
-    )
+    messages = [
+    {
+        "role": "system",
+        "content": system_template.format(
+            context=context,
+            history=history_text
+        )
+    },
+    {
+        "role": "user",
+        "content": query
+    }
+    ]
 
     response = llm.invoke(messages)
     return response
