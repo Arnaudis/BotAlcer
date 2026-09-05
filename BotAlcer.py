@@ -195,29 +195,10 @@ def rag_query(query, llm, history, index, embeddings, k=4):
     context = "\n\n".join(m["metadata"].get("text", "")[:400] for m in matches)
 
     # FILTROS PARA EVITAR RESPUESTAS INCOHERENTES O SIN CONTEXTO
-    # Extraer palabras clave de la pregunta
-    keywords = [w for w in query.lower().split() if len(w) > 3]
-
-    # Comprobar si al menos 2 palabras clave aparecen en el contexto
-    hits = sum(1 for w in keywords if w in context.lower())
-
-    if hits < 2:
-        return "No dispongo información sobre la cuestión solicitada"
-
-    # Evito que el contexto tengo frases sueltas de lo preguntado y no sea capaz de
-    # responder con coherencia.
-    keyword = query.lower().strip()
-    if keyword not in context.lower():
-        return "No dispongo información sobre la cuestión solicitada"
-
-    # Longitud mínima del contexto para evitar respuestas incoherentes
+        # Longitud mínima del contexto para evitar respuestas incoherentes
     if len(context.strip()) < 80:
         return "No dispongo información sobre la cuestión solicitada"
-
-    # La palabra apaerece en el contexto una sol vez, lo que puede indicar que no hay suficiente información para responder correctamente.
-    if context.lower().count(keyword) < 2:
-        return "No dispongo información sobre la cuestión solicitada"
-
+    
 
     # Pasamos a gestionar el historial.
     history_text = ""
