@@ -26,7 +26,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 # -------------------------------------------
-# 3. Pinecone y Embeddings en nomic-embed-text (Ollama)
+# 2. Pinecone y Embeddings en nomic-embed-text (Ollama)
 # -------------------------------------------
 
 def inicializar_recursos_rag():
@@ -109,28 +109,9 @@ def inicializar_recursos_rag():
     return index, embeddings
 
 
-# ----------------------
-# 6. Gestión del Modelo
-# ----------------------
-
-# Si la temperaturas es 0.0, las respuestas que obtendremos serán siempre las mismas para la misma pregunta.
-# Con la temperatura a 0.2 para que de respuestas casi idénticas
-# Si queremos respuestas más variadas, podemos subir la temperatura a 0.6 o 0.8, pero cuidado con respuestas incoherentes.
-
-# Se llama en app.py (streamlit, el frontend)
-
-
-
-# --------------------------------
-# 7. Memoria para la conversación
-# --------------------------------
-
-# En Streamlit inicializamos el historial dentro de st.session_state para que persista
-
-
 
 # -------------------------------------
-# 8. Función RAG que incorpora memoria
+# 3. Función RAG que incorpora memoria
 # -------------------------------------
 
 # Plantilla estructurada utilizando los roles nativos del modelo
@@ -223,49 +204,3 @@ def rag_query(query, llm, history, index, embeddings, k=4):
 
     response = llm.invoke(messages)
     return response
-
-
-    
-# -------------------
-# 9. Ejemplo de uso
-# -------------------
-
-# Solo para realizar preguntas por prompt, sin interacción continua ni memoria.
-"""
-if __name__ == "__main__":
-    pregunta = "¿Qué discapacidad mínima me otorgan tras el reconocimiento?"
-    respuesta = rag_query(pregunta)
-    print("\n=== RESPUESTA RAG ===\n")
-    print(respuesta)
-    pregunta = "¿Dónde presento la solicitud de reconocimiento?"
-    respuesta = rag_query(pregunta)
-    print("\n=== RESPUESTA RAG ===\n")
-    print(respuesta)
-    pregunta = "¿Me puedo dializar fuera de mi casa?"
-    respuesta = rag_query(pregunta)
-    print("\n=== RESPUESTA RAG ===\n")
-    print(respuesta)
-    pregunta = "¿Cuánto cobraría con una incapacidad permanente?"
-    respuesta = rag_query(pregunta)
-    print("\n=== RESPUESTA RAG ===\n")
-    print(respuesta)
-"""
-
-
-
-# ----------------------------------------------------
-# 10. Chat interactivo con opción SALIR para concluir
-# ----------------------------------------------------
-
-# En local...
-# if __name__ == "__main__":
-#     print("\n¡Bienvenido a BotAlcer, tu asistente personal sobre la Enfermedad Renal Crónica!")
-#     while True:
-#         pregunta = input("¿En qué te puedo ayudar?   ")
-#         # Opción para terminar la ejecución
-#         if pregunta.strip().upper() == "SALIR":
-#             print("BotAlcer se despide de ti. ¡Hasta pronto!")
-#             break
-#         respuesta = rag_query(pregunta)
-#         #BotAlcer va respondiendo en tiempo real. Si quisiéramos que respondiese todo de golpe, descomentaríamos la siguiente línea.
-#         #print("\nBotAlcer:\n", respuesta, "\n")

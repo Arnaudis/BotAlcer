@@ -1,8 +1,19 @@
+# Desarrollado por Arnaudis Suárez Sebastián
+# Máster en Big Data y Ciencia de Datos
+# Universidad Internacional de Valencia
+# Abril 2025 - Octubre 2026
+
+
 import streamlit as st
 import os
 from langchain_ollama import OllamaLLM
 from BotAlcer import inicializar_recursos_rag, rag_query
 
+
+
+# --------------------------------------
+# 1. Configuración de la web e Historial
+# --------------------------------------
 
 # Configuración Inicial de la Página Web
 st.set_page_config(page_title="BotAlcer - Asistente ERC", page_icon="🏥", layout="centered")
@@ -15,6 +26,11 @@ if "mensajes" not in st.session_state:
     saludo_inicial = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica. ¿En qué te puedo ayudar hoy?"
     st.session_state.mensajes = [{"rol": "assistant", "texto": saludo_inicial}]
 
+
+
+# -----------------
+# 2. CSS
+# -----------------
 
 # Fondo blanco a través de CSS inyectado (evita que el modo oscuro lo rompa)
 st.markdown(
@@ -72,6 +88,11 @@ st.title("🏥 BotAlcer")
 st.subheader("Asistente experto en Enfermedad Renal Crónica")
 
 
+
+# -----------------------------
+# 3. Pinecone, embeddings y LLM
+# -----------------------------
+
 # Conexiones BackEnd (Memorizado para no conectarse en cada clic)
 @st.cache_resource
 def iniciar_componentes():
@@ -83,10 +104,14 @@ def iniciar_componentes():
     llm = OllamaLLM(model="qwen2.5:1.5b-instruct", temperature=0.0, base_url=ollama_url, num_ctx=512)
     return index, embeddings, llm
 
-
 # Se ejecuta una sola vez al arrancar la app o cuando la caché vence
 index, embeddings, llm = iniciar_componentes()
 
+
+
+# -------------------------------------------------------
+# 4. Gestión de entradas, salidas e historial en pantalla
+# -------------------------------------------------------
 
 # Renderizar todo el historial en pantalla
 for msg in st.session_state.mensajes:
@@ -102,7 +127,7 @@ if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
     
     # Proceso RAG (ahora SOLO tu lógica real)
     with st.spinner("Pensando..."):
-        answer = rag_query(query, llm, st.session_state.historial_conversacion,index,embeddings,)
+        answer = rag_query(query, llm, st.session_state.historial_conversacion,index,embeddings,k=3)
         st.session_state.historial_conversacion.append({"usuario": query, "asistente": answer})
 
     # Mostrar la respuesta del Bot
