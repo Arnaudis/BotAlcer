@@ -1,26 +1,28 @@
-ollama:
-  image: ollama/ollama:latest
-  container_name: ollama
-  restart: unless-stopped
-  volumes:
-    - ollama_data:/root/.ollama
-  environment:
-    - OLLAMA_NUM_PARALLEL=1
-    - OLLAMA_MAX_QUEUE=1
-    - OLLAMA_MAX_LOADED_MODELS=1
+services:
 
-chatbot:
-  build:
-    context: .
-    dockerfile: Dockerfile
-  container_name: chatbot
-  restart: unless-stopped
-  depends_on:
-    - ollama
-  environment:
-    - OLLAMA_HOST=http://ollama:11434
-  ports:
-    - "8501:8501"
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_MAX_QUEUE=1
+      - OLLAMA_MAX_LOADED_MODELS=1
+
+  chatbot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chatbot
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    env_file:
+      - .env
+    ports:
+      - "8501:8501"
 
 volumes:
   ollama_data:
