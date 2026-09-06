@@ -195,6 +195,26 @@ def rag_query(query, llm, history, index, embeddings, k=3):
     # Vamos a buscar en Pinecone
     matches = res.get("matches", [])
     res = index.query(vector=qvec, top_k=k, include_metadata=True, namespace="botalcer-v1")
+
+
+    # Comprobar similitud de las preguntas
+    print("\n========== BÚSQUEDA RAG ==========")
+    print(f"Pregunta: {query}")
+
+    for i, m in enumerate(matches, 1):
+
+        metadata = m.get("metadata", {})
+
+        print(
+            f"Chunk {i} | "
+            f"Score: {m.get('score', 0):.4f} | "
+            f"Página: {metadata.get('page')}"
+        )
+
+    print("===================================\n")
+
+
+
     if not matches:
         return "No dispongo información sobre la cuestión solicitada"
     
