@@ -11,6 +11,7 @@ from BotAlcer import inicializar_recursos_rag, rag_query
 
 
 
+
 # --------------------------------------
 # 1. Configuración de la web e Historial
 # --------------------------------------
@@ -23,8 +24,9 @@ if "historial_conversacion" not in st.session_state:
     st.session_state.historial_conversacion = []
 
 if "mensajes" not in st.session_state:
-    saludo_inicial = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica. ¿En qué te puedo ayudar hoy?"
+    saludo_inicial = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER. ¿En qué te puedo ayudar hoy?"
     st.session_state.mensajes = [{"rol": "assistant", "texto": saludo_inicial}]
+
 
 
 
@@ -89,9 +91,10 @@ st.subheader("Asistente experto en Enfermedad Renal Crónica")
 
 
 
-# -----------------------------
-# 3. Pinecone, embeddings y LLM
-# -----------------------------
+
+# ----------------
+# 3. Llamada a LLM
+# ----------------
 
 # Conexiones BackEnd (Memorizado para no conectarse en cada clic)
 @st.cache_resource
@@ -101,11 +104,12 @@ def iniciar_componentes():
 
     # Inicializa el LLM
     ollama_url = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-    llm = OllamaLLM(model="qwen2.5:1.5b-instruct", temperature=0.0, base_url=ollama_url, num_ctx=512)
+    llm = OllamaLLM(model="qwen3:14b", temperature=0.0, base_url=ollama_url, num_ctx=2048)
     return index, embeddings, llm
 
 # Se ejecuta una sola vez al arrancar la app o cuando la caché vence
 index, embeddings, llm = iniciar_componentes()
+
 
 
 
