@@ -193,10 +193,9 @@ def rag_query(query, llm, history, index, embeddings, k=3):
     qvec = embeddings.embed_query(query)
 
     # Vamos a buscar en Pinecone
-    matches = res.get("matches", [])
     res = index.query(vector=qvec, top_k=k, include_metadata=True, namespace="botalcer-v1")
-
-
+    matches = res.get("matches", [])
+    
     # Comprobar similitud de las preguntas
     print("\n========== BÚSQUEDA RAG ==========")
     print(f"Pregunta: {query}")
@@ -221,7 +220,7 @@ def rag_query(query, llm, history, index, embeddings, k=3):
     # Filtrar por similitud mínima de 0.25
     matches = [m for m in matches if m["score"] >= 0.25]
 
-    matches = sorted(matches, key=lambda x: x.get["score",0], reverse=True)[:k]
+    matches = sorted(matches, key=lambda x: x.get("score",0), reverse=True)[:k]
     
     if not matches:
         return "No dispongo información sobre la cuestión solicitada"
@@ -234,7 +233,7 @@ def rag_query(query, llm, history, index, embeddings, k=3):
 
         text = metadata.get("text", "")
         page = metadata.get("page", None)
-        source = metadata.get("source", PDF_PATH)
+        source = metadata.get("source", "")
 
         if not text.strip():
             continue
