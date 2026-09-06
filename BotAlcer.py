@@ -107,7 +107,22 @@ def inicializar_recursos_rag():
 
     if reindexar:
         print("Reindexación activada. Eliminando documentos anteriores...")
-        index.delete(delete_all=True, namespace=NAMESPACE)
+
+    try:
+        stats = index.describe_index_stats()
+        namespaces = stats.get("namespaces", {})
+
+        if NAMESPACE in namespaces:
+            index.delete(delete_all=True, namespace=NAMESPACE)
+            print(f"Namespace '{NAMESPACE}' eliminado correctamente.")
+        else:
+            print(f"El namespace '{NAMESPACE}' no existe. No hay nada que eliminar.")
+
+    except Exception as e:
+        raise RuntimeError(
+            f"Error al comprobar/eliminar el namespace '{NAMESPACE}': {e}"
+        ) from e
+    
 
     stats = index.describe_index_stats(namespace=NAMESPACE)
     total = stats.get("total_vector_count", 0)
