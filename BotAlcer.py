@@ -314,6 +314,12 @@ def rag_query(query, llm, history, index, embeddings, k=3):
     # Respuesta del modelo tras invocarlo
     t0 = time.time()
     response = llm.invoke(messages)
+
+    print("\n========== RESPUESTA RAW ==========")
+    print(response)
+    print("\n========== RESPONSE CONTENT ==========")
+    print(repr(response.content))
+    print("====================================\n")
     print(
         f"⏱ GENERACIÓN QWEN: "
         f"{time.time() - t0:.2f} segundos"
