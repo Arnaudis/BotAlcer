@@ -116,7 +116,7 @@ def inicializar_recursos_rag():
     if total == 0:
         print("El índice está vacío. Cargando PDF's...")
         PDF_PATH = "0_Informacion_Servicios.pdf"
-        if os.path.exists(PDF_PATH):
+        if not os.path.exists(PDF_PATH):
              raise FileNotFoundError(f"No se encontró el archivo: {PDF_PATH}")
 
         # Cargo el PDF
