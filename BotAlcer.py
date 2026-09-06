@@ -16,7 +16,7 @@ from pinecone import Pinecone, ServerlessSpec
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings
-from langchain_ollama import OllamaLLM
+from langchain_ollama import ChatOllama
 
 # La libería PyPDFLoader genera un DeprecationWarning y queremos que no aparezca.
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -179,6 +179,7 @@ def inicializar_recursos_rag():
 # --------------
 
 def rag_query(query, llm, history, index, embeddings, k=3):
+    inicio_total = time.time()
     # Primeramente vamos a realizar unos pasos previos de normalización y filtro de las entradas del usuario.
     # Normalizar la entrada convirtiendo a minúsculas y quitar espacios sobrantes
     q_norm = query.strip().lower()
@@ -205,10 +206,20 @@ def rag_query(query, llm, history, index, embeddings, k=3):
         return respuesta
 
     # Generar embedding de la consulta del usuario
+    t0 = time.time()
     qvec = embeddings.embed_query(query)
+    print(
+        f"⏱ Embedding consulta: "
+        f"{time.time() - t0:.2f} segundos"
+    )
 
     # Vamos a buscar en Pinecone
+    t0 = time.time()
     res = index.query(vector=qvec, top_k=k, include_metadata=True, namespace="botalcer-v1")
+    print(
+        f"⏱ Búsqueda Pinecone: "
+        f"{time.time() - t0:.2f} segundos"
+    )
     matches = res.get("matches", [])
     
     # Comprobar similitud de las preguntas
@@ -289,6 +300,16 @@ def rag_query(query, llm, history, index, embeddings, k=3):
     ]
 
     # Respuesta del modelo tras invocarlo
+    t0 = time.time()
     response = llm.invoke(messages)
+    print(
+        f"⏱ GENERACIÓN QWEN: "
+        f"{time.time() - t0:.2f} segundos"
+    )
 
-    return response
+    print(
+        f"⏱ TOTAL RAG: "
+        f"{time.time() - inicio_total:.2f} segundos"
+    )
+
+    return response.content

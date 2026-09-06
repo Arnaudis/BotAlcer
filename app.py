@@ -8,7 +8,8 @@ import streamlit as st
 import os
 from langchain_ollama import OllamaLLM
 from BotAlcer import inicializar_recursos_rag, rag_query
-
+# ver donde tarda
+import time
 
 
 
@@ -104,7 +105,7 @@ def iniciar_componentes():
 
     # Inicializa el LLM
     ollama_url = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-    llm = OllamaLLM(model="qwen3:8b", temperature=0.0, base_url=ollama_url, num_ctx=2048)
+    llm = ChatOllama(model="qwen3:8b", base_url=ollama_url, reasoning=False, temperature=0.1, num_predict=300, num_ctx=4096,)
     return index, embeddings, llm
 
 # Se ejecuta una sola vez al arrancar la app o cuando la caché vence
