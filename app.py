@@ -6,7 +6,7 @@
 
 import streamlit as st
 import os
-from langchain_ollama import OllamaLLM
+from langchain_ollama import ChatOllama
 from BotAlcer import inicializar_recursos_rag, rag_query
 # ver donde tarda
 import time
