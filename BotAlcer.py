@@ -223,6 +223,17 @@ def rag_query(query, llm, history, index, embeddings, k=3):
     )
     matches = res.get("matches", [])
     
+    if not matches:
+        return "No dispongo información sobre la cuestión solicitada"
+    
+    # Filtrar por similitud mínima de 0.25
+    matches = [m for m in matches if m["score"] >= 0.25]
+
+    matches = sorted(matches, key=lambda x: x.get("score",0), reverse=True)[:k]
+    
+    if not matches:
+        return "No dispongo información sobre la cuestión solicitada"
+
     # Comprobar similitud de las preguntas
     print("\n========== BÚSQUEDA RAG ==========")
     print(f"Pregunta: {query}")
@@ -238,19 +249,19 @@ def rag_query(query, llm, history, index, embeddings, k=3):
         )
 
     print("===================================\n")
+    print("\n========== CONTEXTO ENVIADO A QWEN ==========")
 
+    for i, match in enumerate(matches, 1):
+        metadata = match.get("metadata", {})
+        texto = metadata.get("text", "")
+        pagina = metadata.get("page", "?")
+        score = match.get("score", 0)
 
+        print(f"\n--- CHUNK {i} | Score: {score:.4f} | Página: {pagina} ---")
+        print(texto)
 
-    if not matches:
-        return "No dispongo información sobre la cuestión solicitada"
-    
-    # Filtrar por similitud mínima de 0.25
-    matches = [m for m in matches if m["score"] >= 0.25]
+    print("========== FIN CONTEXTO ==========\n")
 
-    matches = sorted(matches, key=lambda x: x.get("score",0), reverse=True)[:k]
-    
-    if not matches:
-        return "No dispongo información sobre la cuestión solicitada"
 
     # Construir el contexto concatenando los chunks recuperados
     context_parts = []
