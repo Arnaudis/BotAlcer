@@ -142,7 +142,7 @@ def inicializar_recursos_rag():
         splitter = RecursiveCharacterTextSplitter(
             # El chunk es la partición del texto en trozos más pequeñas. Hacemos que cada trozo tenga 700 caracteres, 
             # con un solapamiento de 150 caracteres entre ellos, que es el chunk_overlap. Esto ayuda a mantener el contexto cuando se dividen los documentos.
-            chunk_size=700, chunk_overlap=150
+            chunk_size=500, chunk_overlap=100
         )
         docs = splitter.split_documents(raw_docs)
 
