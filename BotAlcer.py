@@ -113,11 +113,13 @@ def inicializar_recursos_rag():
         stats = index.describe_index_stats()
         namespaces = stats.get("namespaces", {})
 
-        if NAMESPACE in namespaces:
+        if reindexar and NAMESPACE in namespaces:
             index.delete(delete_all=True, namespace=NAMESPACE)
             print(f"Namespace '{NAMESPACE}' eliminado correctamente.")
-        else:
+        elif reindexar:
             print(f"El namespace '{NAMESPACE}' no existe. No hay nada que eliminar.")
+        else:
+            print("REINDEXAR=false. No se eliminarán los documentos existentes.")
 
     except Exception as e:
         raise RuntimeError(
