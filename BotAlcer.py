@@ -4,8 +4,6 @@
 # Abril 2025 - Octubre 2026
 
 
-
-
 # -----------------
 # 1. Importaciones
 # -----------------
@@ -181,7 +179,7 @@ def inicializar_recursos_rag():
 # 4. Función RAG
 # --------------
 
-def rag_query(query, llm, history, index, embeddings, k=3):
+def rag_query(query, llm, history, index, embeddings, k=2):
     inicio_total = time.time()
     # Primeramente vamos a realizar unos pasos previos de normalización y filtro de las entradas del usuario.
     # Normalizar la entrada convirtiendo a minúsculas y quitar espacios sobrantes
@@ -327,7 +325,7 @@ def rag_query(query, llm, history, index, embeddings, k=3):
             "think": False,
             "options": {
                 "temperature": 0.1,
-                "num_predict": 300,
+                "num_predict": 150,
                 "num_ctx": 4096,
             },
         },
