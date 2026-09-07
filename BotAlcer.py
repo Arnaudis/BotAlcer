@@ -313,13 +313,30 @@ def rag_query(query, llm, history, index, embeddings, k=3):
 
     # Respuesta del modelo tras invocarlo
     t0 = time.time()
-    response = llm.invoke(messages)
+    response = llm.invoke(messages, think=False)
 
-    print("\n========== RESPUESTA RAW ==========")
+    print("\n========== RESPUESTA QWEN ==========")
     print(response)
-    print("\n========== RESPONSE CONTENT ==========")
-    print(repr(response.content))
-    print("====================================\n")
+    print("=====================================")
+
+    contenido = response.content
+
+    if not contenido:
+        contenido = (
+            response.additional_kwargs.get("reasoning_content")
+            or response.additional_kwargs.get("thinking")
+            or ""
+        )
+
+    if not contenido:
+        contenido = "No se ha podido obtener una respuesta del modelo."
+
+    print("RESPUESTA FINAL:", repr(contenido))
+
+    return contenido
+
+
+
     print(
         f"⏱ GENERACIÓN QWEN: "
         f"{time.time() - t0:.2f} segundos"
