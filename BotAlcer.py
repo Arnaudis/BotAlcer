@@ -10,11 +10,9 @@
 
 import os
 import warnings
-from pinecone import Pinecone, ServerlessSpec
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings
-from langchain_ollama import ChatOllama
 import time
 
 # La libería PyPDFLoader genera un DeprecationWarning y queremos que no aparezca.
@@ -286,7 +284,7 @@ def rag_query(query, llm, history, index, embeddings, k=3):
     context = "\n\n".join(context_parts)
 
     # Pasamos a gestionar el historial.
-    history_text = "Sim historial anterior"
+    history_text = "Sin historial anterior"
     if history:
         ultimo = history[-1]
 
@@ -298,29 +296,29 @@ def rag_query(query, llm, history, index, embeddings, k=3):
     
     # Formatear el prompt usando la estructura de mensajes de LangChain
     prompt = system_template.format(
-    context=context,
-    history=history_text
+        context=context,
+        history=history_text
     )
 
-    messages = [
-    {
-        "role": "system","content": prompt
-    },
-    {
-        "role": "user","content": query
-    }
-    ]
+    prompt += f"""
+
+PREGUNTA DEL USUARIO:
+{query}
+
+RESPONDE A LA PREGUNTA UTILIZANDO EXCLUSIVAMENTE EL CONTEXTO.
+RESPONDE SIEMPRE EN ESPAÑOL.
+"""
 
     # Respuesta del modelo tras invocarlo
     t0 = time.time()
 
     import requests
 
-    ollama_response = requests.post(
-        f"{os.getenv('OLLAMA_HOST', 'http://ollama:11434')}/api/chat",
+    response = requests.post(
+        f"{os.getenv('OLLAMA_HOST', 'http://ollama:11434')}/api/generate",
         json={
             "model": "qwen3:1.7b",
-            "messages": messages,
+            "prompt": prompt,
             "stream": False,
             "think": False,
             "options": {
@@ -329,12 +327,14 @@ def rag_query(query, llm, history, index, embeddings, k=3):
                 "num_ctx": 2048,
             },
         },
-        timeout=300,
+        timeout=300
     )
 
-    ollama_response.raise_for_status()
+    response.raise_for_status()
+    data = response.json()
 
-    data = ollama_response.json()
+    contenido = data.get("response", "")
+
     print("\n========== MÉTRICAS OLLAMA ==========")
     print("prompt_eval_count:", data.get("prompt_eval_count"))
     print("prompt_eval_duration:", data.get("prompt_eval_duration"))
@@ -343,9 +343,6 @@ def rag_query(query, llm, history, index, embeddings, k=3):
     print("total_duration:", data.get("total_duration"))
     print("load_duration:", data.get("load_duration"))
     print("====================================")
-
-
-    contenido = data["message"]["content"]
 
     print("\n========== RESPUESTA QWEN ==========")
     print(repr(contenido))
@@ -359,4 +356,5 @@ def rag_query(query, llm, history, index, embeddings, k=3):
     print(f"⏱ TOTAL RAG: {time.time() - inicio_total:.2f} segundos")
 
     return contenido
+
 
