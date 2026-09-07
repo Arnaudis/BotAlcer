@@ -141,9 +141,9 @@ def inicializar_recursos_rag():
 
         # Divido el PDF en chunks
         splitter = RecursiveCharacterTextSplitter(
-            # El chunk es la partición del texto en trozos más pequeñas. Hacemos que cada trozo tenga 1000 caracteres, 
-            # con un solapamiento de 200 caracteres entre ellos, que es el chunk_overlap. Esto ayuda a mantener el contexto cuando se dividen los documentos.
-            chunk_size=1000, chunk_overlap=150
+            # El chunk es la partición del texto en trozos más pequeñas. Hacemos que cada trozo tenga 700 caracteres, 
+            # con un solapamiento de 150 caracteres entre ellos, que es el chunk_overlap. Esto ayuda a mantener el contexto cuando se dividen los documentos.
+            chunk_size=700, chunk_overlap=150
         )
         docs = splitter.split_documents(raw_docs)
 

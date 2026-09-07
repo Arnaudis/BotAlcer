@@ -142,7 +142,7 @@ if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
     
     # Proceso RAG (ahora SOLO tu lógica real)
     with st.spinner("Pensando..."):
-        answer = rag_query(query, llm, st.session_state.historial_conversacion,index,embeddings,k=8)
+        answer = rag_query(query, llm, st.session_state.historial_conversacion,index,embeddings,k=12)
         st.session_state.historial_conversacion.append({"usuario": query, "asistente": answer})
 
     # Mostrar la respuesta del Bot
