@@ -249,7 +249,7 @@ def rag_query(query, llm, history, index, embeddings, k=3):
         )
 
     print("===================================\n")
-    print("\n========== CONTEXTO ENVIADO A GEMMA ==========")
+    print("\n========== CONTEXTO ENVIADO A QWEN ==========")
 
     for i, match in enumerate(matches, 1):
         metadata = match.get("metadata", {})
@@ -319,7 +319,7 @@ def rag_query(query, llm, history, index, embeddings, k=3):
     ollama_response = requests.post(
         f"{os.getenv('OLLAMA_HOST', 'http://ollama:11434')}/api/chat",
         json={
-            "model": "gemma3:4b",
+            "model": "qwen3:4b",
             "messages": messages,
             "stream": False,
             "think": False,
@@ -347,7 +347,7 @@ def rag_query(query, llm, history, index, embeddings, k=3):
 
     contenido = data["message"]["content"]
 
-    print("\n========== RESPUESTA GEMMA ==========")
+    print("\n========== RESPUESTA QWEN ==========")
     print(repr(contenido))
     print("=====================================")
 
@@ -355,7 +355,7 @@ def rag_query(query, llm, history, index, embeddings, k=3):
         contenido = "No se ha podido obtener una respuesta del modelo."
 
     print("RESPUESTA FINAL:", repr(contenido))
-    print(f"⏱ GENERACIÓN GEMMA: {time.time() - t0:.2f} segundos")
+    print(f"⏱ GENERACIÓN QWEN: {time.time() - t0:.2f} segundos")
     print(f"⏱ TOTAL RAG: {time.time() - inicio_total:.2f} segundos")
 
     return contenido
