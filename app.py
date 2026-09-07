@@ -69,6 +69,16 @@ st.markdown(
         background-color: #ffffff !important;
         color: #1e3a8a !important;
     }
+
+    /* Respuesta del chatbot */
+    [data-testid="stChatMessage"] p {
+        color: #1e3a8a !important;
+    }
+
+    /* Texto de la respuesta del asistente */
+    [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
+        color: #1e3a8a !important;
+    }
     </style>
     """,
     unsafe_allow_html=True  # <-- ¡Muy importante para que el CSS funcione!
@@ -132,7 +142,7 @@ if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
     
     # Proceso RAG (ahora SOLO tu lógica real)
     with st.spinner("Pensando..."):
-        answer = rag_query(query, llm, st.session_state.historial_conversacion,index,embeddings,k=3)
+        answer = rag_query(query, llm, st.session_state.historial_conversacion,index,embeddings,k=8)
         st.session_state.historial_conversacion.append({"usuario": query, "asistente": answer})
 
     # Mostrar la respuesta del Bot
