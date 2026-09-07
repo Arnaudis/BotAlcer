@@ -319,7 +319,7 @@ def rag_query(query, llm, history, index, embeddings, k=3):
     ollama_response = requests.post(
         f"{os.getenv('OLLAMA_HOST', 'http://ollama:11434')}/api/chat",
         json={
-            "model": "qwen3:4b",
+            "model": "qwen3:1.7b",
             "messages": messages,
             "stream": False,
             "think": False,
