@@ -313,38 +313,40 @@ def rag_query(query, llm, history, index, embeddings, k=3):
 
     # Respuesta del modelo tras invocarlo
     t0 = time.time()
-    response = llm.invoke(messages, think=False)
+
+    import requests
+
+    ollama_response = requests.post(
+        f"{os.getenv('OLLAMA_HOST', 'http://ollama:11434')}/api/chat",
+        json={
+            "model": "qwen3:8b",
+            "messages": messages,
+            "stream": False,
+            "think": False,
+            "options": {
+                "temperature": 0.1,
+                "num_predict": 300,
+                "num_ctx": 4096,
+            },
+        },
+        timeout=300,
+    )
+
+    ollama_response.raise_for_status()
+
+    data = ollama_response.json()
+    contenido = data["message"]["content"]
 
     print("\n========== RESPUESTA QWEN ==========")
-    print(response)
+    print(repr(contenido))
     print("=====================================")
-
-    contenido = response.content
-
-    if not contenido:
-        contenido = (
-            response.additional_kwargs.get("reasoning_content")
-            or response.additional_kwargs.get("thinking")
-            or ""
-        )
 
     if not contenido:
         contenido = "No se ha podido obtener una respuesta del modelo."
 
     print("RESPUESTA FINAL:", repr(contenido))
+    print(f"⏱ GENERACIÓN QWEN: {time.time() - t0:.2f} segundos")
+    print(f"⏱ TOTAL RAG: {time.time() - inicio_total:.2f} segundos")
 
     return contenido
 
-
-
-    print(
-        f"⏱ GENERACIÓN QWEN: "
-        f"{time.time() - t0:.2f} segundos"
-    )
-
-    print(
-        f"⏱ TOTAL RAG: "
-        f"{time.time() - inicio_total:.2f} segundos"
-    )
-
-    return response.content
