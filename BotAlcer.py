@@ -302,12 +302,12 @@ def rag_query(query, llm, history, index, embeddings, k=3):
 
     prompt += f"""
 
-PREGUNTA DEL USUARIO:
-{query}
+    PREGUNTA DEL USUARIO:
+    {query}
 
-RESPONDE A LA PREGUNTA UTILIZANDO EXCLUSIVAMENTE EL CONTEXTO.
-RESPONDE SIEMPRE EN ESPAÑOL.
-"""
+    RESPONDE A LA PREGUNTA UTILIZANDO EXCLUSIVAMENTE EL CONTEXTO.
+    RESPONDE SIEMPRE EN ESPAÑOL.
+    """
 
     # Respuesta del modelo tras invocarlo
     t0 = time.time()
