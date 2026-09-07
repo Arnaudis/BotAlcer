@@ -335,6 +335,16 @@ def rag_query(query, llm, history, index, embeddings, k=3):
     ollama_response.raise_for_status()
 
     data = ollama_response.json()
+    print("\n========== MÉTRICAS OLLAMA ==========")
+    print("prompt_eval_count:", data.get("prompt_eval_count"))
+    print("prompt_eval_duration:", data.get("prompt_eval_duration"))
+    print("eval_count:", data.get("eval_count"))
+    print("eval_duration:", data.get("eval_duration"))
+    print("total_duration:", data.get("total_duration"))
+    print("load_duration:", data.get("load_duration"))
+    print("====================================")
+
+
     contenido = data["message"]["content"]
 
     print("\n========== RESPUESTA QWEN ==========")
