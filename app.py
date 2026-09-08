@@ -47,7 +47,7 @@ st.markdown(
 
     /* Contenedor principal más ancho */
     .block-container {
-        max-width: 1400px !important;
+        max-width: 1000px !important;
         padding-left: 3rem !important;
         padding-right: 3rem !important;
     }
@@ -56,8 +56,10 @@ st.markdown(
     h1 {
         font-size: 42px !important;
         white-space: nowrap !important;
-        text-align: left !important;
+        text-align: center !important;
     }
+
+    h2 {text-align: center !important;}
     
     h1, h2, h3, p, span {
         color: #ffffff !important;
