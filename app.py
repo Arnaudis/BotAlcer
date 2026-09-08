@@ -48,8 +48,8 @@ st.markdown(
     /* Contenedor principal más ancho */
     .block-container {
         max-width: 1000px !important;
-        padding-left: 3rem !important;
-        padding-right: 3rem !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
     }
 
     /* Título principal */
@@ -119,7 +119,7 @@ with col2:
 
 #st.title("🏥 BotAlcer")
 st.title("Asistente sobre la Enfermedad Renal Crónica (ERC)")
-st.markdown("<h3 style='text-align: center;'>Por ALCER Las Palmas</h3>", unsafe_allow_html=True
+st.markdown("<h3 style='text-align: center;padding-top: -1em;'>Por ALCER Las Palmas</h3>", unsafe_allow_html=True
 )
 
 
