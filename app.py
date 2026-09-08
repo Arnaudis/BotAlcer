@@ -94,7 +94,7 @@ col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     # Al estar dentro de col2, st.image centrará el logo automáticamente en el medio de la web
     if os.path.exists(LOGO_PATH):
-        st.image(LOGO_PATH, width=602)
+        st.image(LOGO_PATH, width=450)
     else:
         st.error(f"No se encontró el logo en: {LOGO_PATH}")
 
