@@ -119,8 +119,19 @@ with col2:
 
 #st.title("🏥 BotAlcer")
 st.title("Asistente sobre la Enfermedad Renal Crónica (ERC)")
-st.markdown("<h3 style='text-align: center;padding-top: -1em;'>Por ALCER Las Palmas</h3>", unsafe_allow_html=True
+st.markdown(
+    """
+    <h3 style="
+        text-align: center;
+        margin-top: -25px;
+        margin-bottom: 10px;
+    ">
+        Por ALCER Las Palmas
+    </h3>
+    """,
+    unsafe_allow_html=True
 )
+
 
 
 
