@@ -46,7 +46,7 @@ st.markdown(
     }
 
     h1, h2, h3, p, span {
-        color: #1e3a8a !important;
+        color: #ffffff !important;
     }
 
     [data-testid="stHeader"] {
@@ -55,7 +55,7 @@ st.markdown(
 
     /* Subimos el logo y bajamos el título */
     [data-testid="stHorizontalBlock"] {
-        margin-top: -20rem !important;    /* Desplaza la imagen hacia arriba para absorber el vacío */
+        margin-top: -8em !important;    /* Desplaza la imagen hacia arriba para absorber el vacío */
         margin-bottom: 1rem !important; /* Contrae el espacio vacío de la parte inferior de la imagen */
     }
 
