@@ -92,13 +92,11 @@ st.markdown(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(BASE_DIR, "pictures", "logoAlcer.png")
 
-col1, col2, col3 = st.columns([1, 8, 1])
+col1, col2, col3 = st.columns([1, 14, 1])
 with col2:
     # Al estar dentro de col2, st.image centrará el logo automáticamente en el medio de la web
     if os.path.exists(LOGO_PATH):
-        sub_col1, sub_col2, sub_col3 = st.columns([1, 2, 1])
-        with sub_col2:
-            st.image(LOGO_PATH, width=380)
+        st.image(LOGO_PATH, width=380)
     else:
         st.error(f"No se encontró el logo en: {LOGO_PATH}")
 
