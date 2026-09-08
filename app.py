@@ -101,7 +101,8 @@ with col2:
         st.error(f"No se encontró el logo en: {LOGO_PATH}")
 
 #st.title("🏥 BotAlcer")
-st.subheader("Asistente en Enfermedad Renal Crónica (ERC) de ALCER Las Palmas")
+st.title("Asistente sobre lan Enfermedad Renal Crónica (ERC)")
+st.subheader("Por ALCER Las Palmas")
 
 
 
