@@ -40,7 +40,8 @@ st.markdown(
     """
     <style>
     .stApp {
-        background-color: #ffffff !important;
+    /* Color de fondo y color del texto */
+        background-color: #004C42 !important;
         color: #2c3e50 !important;
     }
 
@@ -87,18 +88,19 @@ st.markdown(
 # Añado el logo centrado
 # Construir ruta absoluta dinámica para la imagen
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-LOGO_PATH = os.path.join(BASE_DIR, "pictures", "logo.png")
+LOGO_PATH = os.path.join(BASE_DIR, "pictures", "logoAlcer.png")
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     # Al estar dentro de col2, st.image centrará el logo automáticamente en el medio de la web
     if os.path.exists(LOGO_PATH):
-        st.image(LOGO_PATH, width=200)
+        st.image(LOGO_PATH, width=602)
     else:
         st.error(f"No se encontró el logo en: {LOGO_PATH}")
 
-st.title("🏥 BotAlcer")
-st.subheader("Asistente experto en Enfermedad Renal Crónica")
+#st.title("🏥 BotAlcer")
+#st.subheader("Asistente experto en Enfermedad Renal Crónica")
+st.title("Asistente en Enfermedad Renal Crónica (ERC) de ALCER Las Palmas")
 
 
 
