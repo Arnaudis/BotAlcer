@@ -59,8 +59,6 @@ st.markdown(
         text-align: center !important;
     }
 
-    h2 {text-align: center !important;}
-    
     h1, h2, h3, p, span {
         color: #ffffff !important;
     }
@@ -91,12 +89,14 @@ st.markdown(
     [data-testid="stChatMessage"] p {
         background-color: #ffffff !important;
         color: #1e3a8a !important;
+        padding: 3px !important;
     }
 
     /* Texto de la respuesta del asistente */
     [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
         background-color: #ffffff !important;
         color: #000000 !important;
+        padding: 3px !important;
     }
     </style>
     """,
@@ -118,7 +118,7 @@ with col2:
 
 #st.title("🏥 BotAlcer")
 st.title("Asistente sobre lan Enfermedad Renal Crónica (ERC)")
-st.subheader("Por ALCER Las Palmas")
+st.subheader("<p style='text-align: center;'>Por ALCER Las Palmas</p>")
 
 
 
