@@ -96,7 +96,8 @@ st.markdown(
     [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
         background-color: #ffffff !important;
         color: #000000 !important;
-        padding: 3px !important;
+        padding-top: 3px !important;
+        padding-bottom: 3px !important;
     }
     </style>
     """,
@@ -117,8 +118,9 @@ with col2:
         st.error(f"No se encontró el logo en: {LOGO_PATH}")
 
 #st.title("🏥 BotAlcer")
-st.title("Asistente sobre lan Enfermedad Renal Crónica (ERC)")
-st.subheader("<p style='text-align: center;'>Por ALCER Las Palmas</p>")
+st.title("Asistente sobre la Enfermedad Renal Crónica (ERC)")
+st.markdown("<h3 style='text-align: center;'>Por ALCER Las Palmas</h3>", unsafe_allow_html=True
+)
 
 
 
