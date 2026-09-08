@@ -89,15 +89,15 @@ st.markdown(
     [data-testid="stChatMessage"] p {
         background-color: #ffffff !important;
         color: #1e3a8a !important;
-        padding: 3px !important;
+        padding: 2px !important;
     }
 
     /* Texto de la respuesta del asistente */
     [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
         background-color: #ffffff !important;
         color: #000000 !important;
-        padding-top: 3px !important;
-        padding-bottom: 3px !important;
+        padding-top: 2px !important;
+        padding-bottom: 2px !important;
     }
     </style>
     """,
