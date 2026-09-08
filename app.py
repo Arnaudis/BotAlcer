@@ -4,6 +4,8 @@
 # Abril 2025 - Octubre 2026
 
 
+import base64
+
 import streamlit as st
 import os
 from langchain_ollama import ChatOllama
@@ -94,14 +96,23 @@ LOGO_PATH = os.path.join(BASE_DIR, "pictures", "logoAlcer.png")
 
 col1, col2, col3 = st.columns([1, 14, 1])
 with col2:
-    # Al estar dentro de col2, st.image centrará el logo automáticamente en el medio de la web
     if os.path.exists(LOGO_PATH):
-        st.image(LOGO_PATH, width=380)
+        with open(LOGO_PATH, "rb") as image_file:
+            encoded_image = base64.b64encode(image_file.read()).decode()
+
+        st.markdown(
+            f"""
+            <div style="display: flex; flex-direction: column; align-items: flex-end; text-align: right; width: 100%; margin-top: -6em; margin-bottom: 1rem;">
+                <img src="data:image/png;base64,{encoded_image}" style="max-width: 380px; width: 100%; height: auto; margin-bottom: 10px;">
+                <h3 style="white-space: nowrap; font-size: clamp(1rem, 2.2vw, 1.6rem); font-weight: 600; margin: 0; padding: 0;">
+                    Asistente en Enfermedad Renal Crónica (ERC) de ALCER Las Palmas
+                </h3>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     else:
         st.error(f"No se encontró el logo en: {LOGO_PATH}")
-
-#st.title("🏥 BotAlcer")
-st.subheader("Asistente en Enfermedad Renal Crónica (ERC) de ALCER Las Palmas")
 
 
 
