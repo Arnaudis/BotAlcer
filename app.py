@@ -56,7 +56,7 @@ st.markdown(
     /* Subimos el logo y bajamos el título */
     [data-testid="stHorizontalBlock"] {
         margin-top: -6em !important;    /* Desplaza la imagen hacia arriba para absorber el vacío */
-        margin-bottom: 2rem !important; /* Contrae el espacio vacío de la parte inferior de la imagen */
+        margin-bottom: 1rem !important; /* Contrae el espacio vacío de la parte inferior de la imagen */
     }
 
     /* Personalizamos la entrada de texto del usuario */
@@ -92,7 +92,7 @@ st.markdown(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(BASE_DIR, "pictures", "logoAlcer.png")
 
-col1, col2, col3 = st.columns([1, 6, 1])
+col1, col2, col3 = st.columns([1, 8, 1])
 with col2:
     # Al estar dentro de col2, st.image centrará el logo automáticamente en el medio de la web
     if os.path.exists(LOGO_PATH):
