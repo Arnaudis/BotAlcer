@@ -39,76 +39,20 @@ if "mensajes" not in st.session_state:
 st.markdown(
     """
     <style>
-
-    /* =========================================================
-       FONDO GENERAL DE LA APLICACIÓN
-       ========================================================= */
-
     .stApp {
-        /* Color de fondo y color del texto */
+    /* Color de fondo y color del texto */
         background-color: #004C42 !important;
         color: #2c3e50 !important;
     }
 
-
-    /* =========================================================
-       CONTENEDOR PRINCIPAL
-       ========================================================= */
-
     /* Contenedor principal más ancho */
     .block-container {
         max-width: 1000px !important;
-
-        /* Dejamos espacio arriba para que la cabecera fija
-           no tape el historial de conversación */
-        padding-top: 280px !important;
-
         padding-left: 2rem !important;
         padding-right: 2rem !important;
-        padding-bottom: 5rem !important;
     }
 
-
-    /* =========================================================
-       CABECERA FIJA DE BOTALCER
-       ========================================================= */
-
-    /* La cabecera queda fija mientras hacemos scroll */
-    .st-key-cabecera_fija {
-        position: fixed !important;
-
-        top: 0 !important;
-        left: 0 !important;
-
-        width: 100vw !important;
-        height: 260px !important;
-
-        background-color: #004C42 !important;
-
-        z-index: 999999 !important;
-
-        padding-top: 15px !important;
-        padding-bottom: 10px !important;
-
-        box-sizing: border-box !important;
-
-        /* Evita que aparezca una sombra o borde extraño */
-        border: none !important;
-        box-shadow: none !important;
-    }
-
-
-    /* El contenido de la cabecera permanece centrado */
-    .st-key-cabecera_fija > div {
-        max-width: 1000px !important;
-        margin: 0 auto !important;
-    }
-
-
-    /* =========================================================
-       TÍTULO PRINCIPAL
-       ========================================================= */
-
+    /* Título principal */
     h1 {
         font-size: 42px !important;
         white-space: nowrap !important;
@@ -119,31 +63,17 @@ st.markdown(
         color: #ffffff !important;
     }
 
-
-    /* =========================================================
-       OCULTAR CABECERA NATIVA DE STREAMLIT
-       ========================================================= */
-
     [data-testid="stHeader"] {
-        display: none !important;
-        /* Esconder completamente la cabecera invisible */
+        display: none !important; /* Esconder completamente la cabecera invisible */
     }
 
-
-    /* =========================================================
-       LOGOS / COLUMNAS DE LA CABECERA
-       ========================================================= */
-
+    /* Subimos el logo y bajamos el título */
     [data-testid="stHorizontalBlock"] {
-        margin-top: 0 !important;
-        margin-bottom: 1rem !important;
+        margin-top: -6em !important;    /* Desplaza la imagen hacia arriba para absorber el vacío */
+        margin-bottom: 1rem !important; /* Contrae el espacio vacío de la parte inferior de la imagen */
     }
 
-
-    /* =========================================================
-       PERSONALIZAMOS LA ENTRADA DE TEXTO DEL USUARIO
-       ========================================================= */
-
+    /* Personalizamos la entrada de texto del usuario */
     [data-testid="stChatInput"] {
         border: 2px solid #009837 !important;
         border-radius: 12px !important;
@@ -155,17 +85,12 @@ st.markdown(
         color: #1e3a8a !important;
     }
 
-
-    /* =========================================================
-       RESPUESTA DEL CHATBOT
-       ========================================================= */
-
+    /* Respuesta del chatbot */
     [data-testid="stChatMessage"] p {
         background-color: #ffffff !important;
         color: #1e3a8a !important;
         padding: 2px !important;
     }
-
 
     /* Texto de la respuesta del asistente */
     [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
@@ -174,12 +99,10 @@ st.markdown(
         padding-top: 2px !important;
         padding-bottom: 2px !important;
     }
-
     </style>
     """,
     unsafe_allow_html=True  # <-- ¡Muy importante para que el CSS funcione!
 )
-
 
 # Añado el logo centrado
 # Construir ruta absoluta dinámica para la imagen
@@ -206,7 +129,9 @@ st.markdown(
         Por ALCER Las Palmas
     </h3>
     """,
-    unsafe_allow_html=True)
+    unsafe_allow_html=True
+)
+
 
 
 
