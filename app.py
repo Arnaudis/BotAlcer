@@ -18,7 +18,7 @@ import time
 # --------------------------------------
 
 # Configuración Inicial de la Página Web
-st.set_page_config(page_title="BotAlcer - Asistente ERC", page_icon="🏥", layout="centered")
+st.set_page_config(page_title="BotAlcer - Asistente ERC", page_icon="icono.ico", layout="centered")
 
 # Inicializar historial de conversación
 if "historial_conversacion" not in st.session_state:
