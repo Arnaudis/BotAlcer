@@ -332,7 +332,7 @@ def rag_query(query, llm, history, index, embeddings, k=1):
             "think": False,
             "options": {
                 "temperature": 0.1,
-                "num_predict": 120,
+                "num_predict": 200,
                 "num_ctx": 2048,
             },
         },
