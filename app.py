@@ -18,7 +18,14 @@ import time
 # --------------------------------------
 
 # Configuración Inicial de la Página Web
-st.set_page_config(page_title="BotAlcer - Asistente ERC", page_icon="icono.ico", layout="centered")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ICON_PATH = os.path.join(BASE_DIR, "pictures", "icono.ico")
+
+st.set_page_config(
+    page_title="BotAlcer - Asistente ERC",
+    page_icon=ICON_PATH,
+    layout="centered"
+)
 
 # Inicializar historial de conversación
 if "historial_conversacion" not in st.session_state:
