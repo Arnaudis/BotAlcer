@@ -39,6 +39,10 @@ if "mensajes" not in st.session_state:
 if "contacto_estado" not in st.session_state:
     st.session_state.contacto_estado = "pendiente"
 
+# Controlar si ya se ha mostrado la pregunta de contacto
+if "contacto_pregunta_mostrada" not in st.session_state:
+    st.session_state.contacto_pregunta_mostrada = False
+    
 # Guardar los datos de contacto
 if "nombre_contacto" not in st.session_state:
     st.session_state.nombre_contacto = ""
@@ -131,7 +135,7 @@ col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     # Al estar dentro de col2, st.image centrará el logo automáticamente en el medio de la web
     if os.path.exists(LOGO_PATH):
-        st.image(LOGO_PATH, width=380)
+        st.image(LOGO_PATH, width=275)
     else:
         st.error(f"No se encontró el logo en: {LOGO_PATH}")
 
@@ -179,24 +183,109 @@ index, embeddings, llm = iniciar_componentes()
 # 4. Gestión de entradas, salidas e historial en pantalla
 # -------------------------------------------------------
 
+# Mostrar la pregunta sobre los datos de contacto
+if not st.session_state.contacto_pregunta_mostrada:
+    st.session_state.mensajes.append({
+        "rol": "assistant",
+        "texto": "¿Estarías interesado en dejar tus datos de contacto para que se ponga en contacto contigo una trabajadora social de ALCER?"
+    })
+    st.session_state.contacto_pregunta_mostrada = True
+
 # Renderizar todo el historial en pantalla
 for msg in st.session_state.mensajes:
     with st.chat_message(msg["rol"]):
         st.write(msg["texto"])
 
-# Entrada del usuario
-if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
-    # Mostrar la pregunta en pantalla
-    with st.chat_message("user"):
-        st.write(query)
-    st.session_state.mensajes.append({"rol": "user", "texto": query})
-    
-    # Proceso RAG (ahora SOLO tu lógica real)
-    with st.spinner("Pensando..."):
-        answer = rag_query(query, llm, st.session_state.historial_conversacion,index,embeddings,k=1)
-        st.session_state.historial_conversacion.append({"usuario": query, "asistente": answer})
 
-    # Mostrar la respuesta del Bot
-    with st.chat_message("assistant"):
-        st.write(answer)
-    st.session_state.mensajes.append({"rol": "assistant", "texto": answer})
+# -------------------------------------------------------
+# 4.1. Solicitud de datos de contacto
+# -------------------------------------------------------
+
+if st.session_state.contacto_estado == "pendiente":
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("Lo deseo", use_container_width=True):
+            st.session_state.contacto_estado = "formulario"
+            st.rerun()
+
+    with col2:
+        if st.button("No lo deseo", use_container_width=True):
+            st.session_state.contacto_estado = "finalizado"
+
+            st.session_state.mensajes.append({
+                "rol": "assistant",
+                "texto": "¿En qué te puedo ayudar hoy?"
+            })
+
+            st.rerun()
+
+
+# -------------------------------------------------------
+# 4.2. Formulario de datos de contacto
+# -------------------------------------------------------
+
+if st.session_state.contacto_estado == "formulario":
+
+    st.markdown("### Datos de contacto")
+
+    with st.form("formulario_contacto"):
+
+        nombre = st.text_input(
+            "Nombre",
+            value=st.session_state.nombre_contacto
+        )
+
+        movil = st.text_input(
+            "Nº de móvil",
+            value=st.session_state.movil_contacto
+        )
+
+        enviar_datos = st.form_submit_button(
+            "Enviar datos",
+            use_container_width=True
+        )
+
+    if enviar_datos:
+
+        if not nombre.strip() or not movil.strip():
+            st.warning("Por favor, introduce tu nombre y tu nº de móvil.")
+
+        else:
+            # Guardar los datos de contacto
+            st.session_state.nombre_contacto = nombre.strip()
+            st.session_state.movil_contacto = movil.strip()
+
+            st.session_state.contacto_estado = "finalizado"
+
+            st.session_state.mensajes.append({
+                "rol": "assistant",
+                "texto": "Gracias. ¿En qué te puedo ayudar hoy?"
+            })
+
+            st.rerun()
+
+
+# -------------------------------------------------------
+# 4.3. Chatbot
+# -------------------------------------------------------
+
+if st.session_state.contacto_estado == "finalizado":
+
+    # Entrada del usuario
+    if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
+        # Mostrar la pregunta en pantalla
+        with st.chat_message("user"):
+            st.write(query)
+        st.session_state.mensajes.append({"rol": "user", "texto": query})
+        
+        # Proceso RAG (ahora SOLO tu lógica real)
+        with st.spinner("Pensando..."):
+            answer = rag_query(query, llm, st.session_state.historial_conversacion,index,embeddings,k=1)
+            st.session_state.historial_conversacion.append({"usuario": query, "asistente": answer})
+
+        # Mostrar la respuesta del Bot
+        with st.chat_message("assistant"):
+            st.write(answer)
+        st.session_state.mensajes.append({"rol": "assistant", "texto": answer})
