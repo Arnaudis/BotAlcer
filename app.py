@@ -31,9 +31,9 @@ st.set_page_config(
 if "historial_conversacion" not in st.session_state:
     st.session_state.historial_conversacion = []
 
-if "mensajes" not in st.session_state:
-    saludo_inicial = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER."
-    st.session_state.mensajes = [{"rol": "assistant", "texto": saludo_inicial}]
+#if "mensajes" not in st.session_state:
+#    saludo_inicial = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER."
+#    st.session_state.mensajes = [{"rol": "assistant", "texto": saludo_inicial}]
 
 # Controlar el estado inicial del contacto
 if "contacto_estado" not in st.session_state:
@@ -187,7 +187,7 @@ index, embeddings, llm = iniciar_componentes()
 if not st.session_state.contacto_pregunta_mostrada:
     st.session_state.mensajes.append({
         "rol": "assistant",
-        "texto": "¿Estarías interesado en dejar tus datos de contacto para que se ponga en contacto contigo una trabajadora social de ALCER?"
+        "texto": "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER. ¿Estarías interesado en dejar tus datos de contacto para que se ponga en contacto contigo una trabajadora social de ALCER?"
     })
     st.session_state.contacto_pregunta_mostrada = True
 
