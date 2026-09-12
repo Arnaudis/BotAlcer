@@ -27,7 +27,6 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 # ------------------
 
 # Plantilla estructurada utilizando los roles nativos del modelo
-```python
 system_template = """
 Eres BotAlcer, un asistente especializado en Enfermedad Renal Crónica (ERC) y en los servicios de la asociación ALCER Las Palmas.
 
@@ -73,7 +72,6 @@ CONTENIDO PROPORCIONADO:
 HISTORIAL RELEVANTE:
 {history}
 """
-```
 
 
 
