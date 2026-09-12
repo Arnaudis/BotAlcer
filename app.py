@@ -33,7 +33,7 @@ if "historial_conversacion" not in st.session_state:
 
 if "mensajes" not in st.session_state:
     saludo_inicial = (
-        "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER.\n\n"
+        "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER.\n"
         "¿Estarías interesado en dejar tus datos de contacto para que se ponga en contacto contigo "
         "una trabajadora social de ALCER?"
     )
@@ -200,7 +200,7 @@ for msg in st.session_state.mensajes:
 
 if st.session_state.contacto_estado == "pendiente":
 
-    st.markdown("<div style='height: 75px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 60px;'></div>", unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
 
