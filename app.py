@@ -31,25 +31,30 @@ st.set_page_config(
 if "historial_conversacion" not in st.session_state:
     st.session_state.historial_conversacion = []
 
-#if "mensajes" not in st.session_state:
-#    saludo_inicial = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER."
-#    st.session_state.mensajes = [{"rol": "assistant", "texto": saludo_inicial}]
+if "mensajes" not in st.session_state:
+    saludo_inicial = (
+        "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER.\n\n"
+        "¿Estarías interesado en dejar tus datos de contacto para que se ponga en contacto contigo "
+        "una trabajadora social de ALCER?"
+    )
+
+    st.session_state.mensajes = [
+        {
+            "rol": "assistant",
+            "texto": saludo_inicial
+        }
+    ]
 
 # Controlar el estado inicial del contacto
 if "contacto_estado" not in st.session_state:
     st.session_state.contacto_estado = "pendiente"
 
-# Controlar si ya se ha mostrado la pregunta de contacto
-if "contacto_pregunta_mostrada" not in st.session_state:
-    st.session_state.contacto_pregunta_mostrada = False
-    
 # Guardar los datos de contacto
 if "nombre_contacto" not in st.session_state:
     st.session_state.nombre_contacto = ""
 
 if "movil_contacto" not in st.session_state:
     st.session_state.movil_contacto = ""
-
 
 
 
@@ -182,14 +187,6 @@ index, embeddings, llm = iniciar_componentes()
 # -------------------------------------------------------
 # 4. Gestión de entradas, salidas e historial en pantalla
 # -------------------------------------------------------
-
-# Mostrar la pregunta sobre los datos de contacto
-if not st.session_state.contacto_pregunta_mostrada:
-    st.session_state.mensajes.append({
-        "rol": "assistant",
-        "texto": "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER. ¿Estarías interesado en dejar tus datos de contacto para que se ponga en contacto contigo una trabajadora social de ALCER?"
-    })
-    st.session_state.contacto_pregunta_mostrada = True
 
 # Renderizar todo el historial en pantalla
 for msg in st.session_state.mensajes:
