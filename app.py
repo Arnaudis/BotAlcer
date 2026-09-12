@@ -32,8 +32,19 @@ if "historial_conversacion" not in st.session_state:
     st.session_state.historial_conversacion = []
 
 if "mensajes" not in st.session_state:
-    saludo_inicial = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER. ¿En qué te puedo ayudar hoy?"
+    saludo_inicial = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER."
     st.session_state.mensajes = [{"rol": "assistant", "texto": saludo_inicial}]
+
+# Controlar el estado inicial del contacto
+if "contacto_estado" not in st.session_state:
+    st.session_state.contacto_estado = "pendiente"
+
+# Guardar los datos de contacto
+if "nombre_contacto" not in st.session_state:
+    st.session_state.nombre_contacto = ""
+
+if "movil_contacto" not in st.session_state:
+    st.session_state.movil_contacto = ""
 
 
 
