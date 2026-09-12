@@ -200,6 +200,8 @@ for msg in st.session_state.mensajes:
 
 if st.session_state.contacto_estado == "pendiente":
 
+    st.markdown("<div style='height: 25px;'></div>", unsafe_allow_html=True)
+
     col1, col2 = st.columns(2)
 
     with col1:
