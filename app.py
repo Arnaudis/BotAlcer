@@ -116,7 +116,7 @@ st.markdown(
     [data-testid="stChatMessage"] p {
         background-color: #ffffff !important;
         color: #1e3a8a !important;
-        padding: 2px !important;
+        padding: 1px !important;
     }
 
     /* Texto de la respuesta del asistente */
@@ -200,7 +200,7 @@ for msg in st.session_state.mensajes:
 
 if st.session_state.contacto_estado == "pendiente":
 
-    st.markdown("<div style='height: 60px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 75px;'></div>", unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
 
