@@ -224,7 +224,7 @@ st.markdown(
         line-height: 1.2 !important;
         word-wrap: break-word !important;
         overflow-wrap: break-word !important;
-        margin-top: -30px !important;
+        margin-top: -20px !important;
         margin-bottom: 0px !important;
     }
 
@@ -489,7 +489,7 @@ if os.path.exists(LOGO_PATH):
             align-items: center;
             width: 100%;
         ">
-            <a href="https://arnaudis.es" target="_blank">
+            <a href="https://arnaudis.es">
                 <img
                     src="data:image/png;base64,{logo_base64}"
                     width="250"
