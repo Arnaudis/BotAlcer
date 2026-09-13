@@ -448,7 +448,7 @@ if st.session_state.contacto_estado == "pendiente":
 
             st.session_state.mensajes.append({
                 "rol": "assistant",
-                "texto": "¿En qué te puedo ayudar hoy?"
+                "texto": "Gracias. ¿En qué te puedo ayudar hoy?"
             })
 
             st.rerun()
