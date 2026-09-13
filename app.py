@@ -88,12 +88,14 @@ st.markdown(
 
     /* Título principal */
     h1 {
-        font-size: 32px !important;
+        font-size: 42px !important;
         white-space: normal !important;
         text-align: center !important;
         line-height: 1.2 !important;
         word-wrap: break-word !important;
         overflow-wrap: break-word !important;
+        margin-top: -30px !important;
+        margin-bottom: 0px !important;
     }
 
     h1, h2, h3, p, span {
@@ -374,12 +376,6 @@ else:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-
-/* Subimos el título y el subtítulo */
-h1 {
-    margin-top: -25px !important;
-    margin-bottom: 5px !important;
-}
 
 #st.title("🏥 BotAlcer")
 st.title("Asistente sobre la Enfermedad Renal Crónica (ERC)")
