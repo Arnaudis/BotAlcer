@@ -11,32 +11,17 @@ services:
       - OLLAMA_MAX_QUEUE=1
       - OLLAMA_MAX_LOADED_MODELS=2
 
-  # Corregir automáticamente los permisos de la carpeta de conversaciones
-  permisos:
-    image: alpine:latest
-    container_name: permisos_conversaciones
-    user: "0:0"
-    volumes:
-      - ./conversaciones:/app/conversaciones
-    command: sh -c "chown -R 1000:1000 /app/conversaciones"
-    restart: "no"
-
   chatbot:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: chatbot
     restart: unless-stopped
-    depends_on:
-      ollama:
-        condition: service_started
-      permisos:
-        condition: service_completed_successfully
     env_file:
       - .env
     ports:
       - "8501:8501"
-    user: "1000:1000"
+    user: "1001:1001"
     volumes:
       - ./conversaciones:/app/conversaciones
 
