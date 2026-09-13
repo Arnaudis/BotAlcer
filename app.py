@@ -66,8 +66,13 @@ if "movil_contacto" not in st.session_state:
 st.markdown(
     """
     <style>
+
+    /* --------------------------------------
+       CONFIGURACIÓN GENERAL
+       -------------------------------------- */
+
     .stApp {
-    /* Color de fondo y color del texto */
+        /* Color de fondo y color del texto */
         background-color: #004C42 !important;
         color: #2c3e50 !important;
     }
@@ -75,15 +80,20 @@ st.markdown(
     /* Contenedor principal más ancho */
     .block-container {
         max-width: 1000px !important;
+        width: 100% !important;
         padding-left: 2rem !important;
         padding-right: 2rem !important;
+        box-sizing: border-box !important;
     }
 
     /* Título principal */
     h1 {
         font-size: 42px !important;
-        white-space: nowrap !important;
+        white-space: normal !important;
         text-align: center !important;
+        line-height: 1.2 !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
     }
 
     h1, h2, h3, p, span {
@@ -100,23 +110,50 @@ st.markdown(
         margin-bottom: -1rem !important; /* Contrae el espacio vacío de la parte inferior de la imagen */
     }
 
-    /* Personalizamos la entrada de texto del usuario */
+    /* --------------------------------------
+       LOGO
+       -------------------------------------- */
+
+    [data-testid="stImage"] img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+
+    /* --------------------------------------
+       ENTRADA DE TEXTO DEL USUARIO
+       -------------------------------------- */
+
     [data-testid="stChatInput"] {
         border: 2px solid #009837 !important;
         border-radius: 12px !important;
         background-color: #ffffff !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     [data-testid="stChatInput"] textarea {
         background-color: #ffffff !important;
         color: #1e3a8a !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 
-    /* Respuesta del chatbot */
+    /* --------------------------------------
+       RESPUESTA DEL CHATBOT
+       -------------------------------------- */
+
+    [data-testid="stChatMessage"] {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
     [data-testid="stChatMessage"] p {
         background-color: #ffffff !important;
         color: #1e3a8a !important;
-        padding: 1px !important;
+        padding: 8px !important;
+        margin: 0 !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
     }
 
     /* Texto de la respuesta del asistente */
@@ -125,7 +162,173 @@ st.markdown(
         color: #000000 !important;
         padding-top: 2px !important;
         padding-bottom: 2px !important;
+        max-width: 100% !important;
+        overflow-wrap: break-word !important;
+        word-wrap: break-word !important;
     }
+
+    /* --------------------------------------
+       BOTONES
+       -------------------------------------- */
+
+    [data-testid="stButton"] button {
+        width: 100% !important;
+        min-height: 45px !important;
+    }
+
+    /* --------------------------------------
+       FORMULARIO
+       -------------------------------------- */
+
+    [data-testid="stForm"] {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* --------------------------------------
+       TABLET
+       -------------------------------------- */
+
+    @media (max-width: 768px) {
+
+        .block-container {
+            max-width: 100% !important;
+            padding-left: 1.25rem !important;
+            padding-right: 1.25rem !important;
+        }
+
+        h1 {
+            font-size: 34px !important;
+            white-space: normal !important;
+        }
+
+        h3 {
+            font-size: 20px !important;
+        }
+
+        [data-testid="stHorizontalBlock"] {
+            margin-top: -4em !important;
+            margin-bottom: 0 !important;
+        }
+
+    }
+
+    /* --------------------------------------
+       MÓVIL
+       -------------------------------------- */
+
+    @media (max-width: 600px) {
+
+        .block-container {
+            max-width: 100% !important;
+            width: 100% !important;
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+            padding-top: 1rem !important;
+        }
+
+        /* Título principal */
+        h1 {
+            font-size: 27px !important;
+            line-height: 1.2 !important;
+            white-space: normal !important;
+            text-align: center !important;
+            margin-top: 5px !important;
+            margin-bottom: 8px !important;
+        }
+
+        /* Subtítulo */
+        h3 {
+            font-size: 18px !important;
+            line-height: 1.25 !important;
+            text-align: center !important;
+        }
+
+        /* Logo */
+        [data-testid="stImage"] img {
+            max-width: 75% !important;
+            height: auto !important;
+        }
+
+        /* Ajuste del bloque del logo */
+        [data-testid="stHorizontalBlock"] {
+            margin-top: -3em !important;
+            margin-bottom: 0 !important;
+        }
+
+        /* Mensajes del chatbot */
+        [data-testid="stChatMessage"] {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+
+        [data-testid="stChatMessage"] p {
+            font-size: 15px !important;
+            line-height: 1.45 !important;
+            padding: 8px !important;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Entrada de texto */
+        [data-testid="stChatInput"] {
+            width: 100% !important;
+            border-radius: 10px !important;
+        }
+
+        [data-testid="stChatInput"] textarea {
+            font-size: 16px !important;
+        }
+
+        /* Botones */
+        [data-testid="stButton"] button {
+            width: 100% !important;
+            min-height: 48px !important;
+            font-size: 16px !important;
+        }
+
+        /* Espacio antes de los botones */
+        [data-testid="stHorizontalBlock"] {
+            width: 100% !important;
+        }
+
+    }
+
+    /* --------------------------------------
+       MÓVIL PEQUEÑO
+       -------------------------------------- */
+
+    @media (max-width: 400px) {
+
+        .block-container {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+        }
+
+        h1 {
+            font-size: 24px !important;
+        }
+
+        h3 {
+            font-size: 17px !important;
+        }
+
+        [data-testid="stImage"] img {
+            max-width: 70% !important;
+        }
+
+        [data-testid="stChatMessage"] p {
+            font-size: 14px !important;
+        }
+
+    }
+
     </style>
     """,
     unsafe_allow_html=True  # <-- ¡Muy importante para que el CSS funcione!
