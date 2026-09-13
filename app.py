@@ -584,7 +584,7 @@ if st.session_state.contacto_estado == "pendiente":
 
             st.session_state.mensajes.append({
                 "rol": "Asistente",
-                "texto": "Gracias. ¿En qué te puedo ayudar hoy?"
+                "texto": "Gracias. ¿En qué te puedo ayudar ahora?"
             })
 
             guardar_conversacion()
@@ -631,7 +631,7 @@ if st.session_state.contacto_estado == "formulario":
 
             st.session_state.mensajes.append({
                 "rol": "Asistente",
-                "texto": "Gracias. ¿En qué te puedo ayudar hoy?"
+                "texto": f"Gracias {nombre.strip()} por facilitar tus datos. Contactaremos contigo lo más pronto posible. ¿En qué te puedo ayudar ahora mismo?"
             })
 
             guardar_conversacion()
