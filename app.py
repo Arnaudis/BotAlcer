@@ -13,7 +13,8 @@ import time
 from datetime import datetime
 import re
 from streamlit_autorefresh import st_autorefresh
-
+from PIL import Image, ImageDraw, ImageFont
+import io
 
 
 
@@ -643,6 +644,35 @@ if st.session_state.contacto_estado == "formulario":
 # 4.3. Chatbot
 # -------------------------------------------------------
 
+# Función para crear un avatar con la inicial del nombre
+def crear_avatar_inicial(nombre):
+    inicial = nombre.strip()[0].upper() if nombre.strip() else "?"
+
+    imagen = Image.new("RGB", (100, 100), "white")
+    dibujo = ImageDraw.Draw(imagen)
+
+    # Círculo
+    dibujo.ellipse((0, 0, 100, 100), fill="#00665A")
+
+    # Letra
+    fuente = ImageFont.load_default(size=50)
+
+    caja = dibujo.textbbox((0, 0), inicial, font=fuente)
+    ancho = caja[2] - caja[0]
+    alto = caja[3] - caja[1]
+
+    x = (100 - ancho) / 2
+    y = (100 - alto) / 2 - caja[1]
+
+    dibujo.text((x, y), inicial, fill="white", font=fuente)
+
+    buffer = io.BytesIO()
+    imagen.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    return buffer
+
+
 if st.session_state.contacto_estado == "finalizado" and not st.session_state.conversacion_cerrada:
 
     # Entrada del usuario
@@ -650,7 +680,9 @@ if st.session_state.contacto_estado == "finalizado" and not st.session_state.con
     if st.session_state.nombre_contacto == "":
         avatar_usuario = "👤"
     else:
-        avatar_usuario = st.session_state.nombre_contacto.strip()[0].upper()
+        avatar_usuario = crear_avatar_inicial(
+            st.session_state.nombre_contacto
+        )
 
     if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
         # Mostrar la pregunta en pantalla
@@ -673,3 +705,4 @@ if st.session_state.contacto_estado == "finalizado" and not st.session_state.con
         st.session_state.mensajes.append({"rol": "Asistente", "texto": answer})
 
         guardar_conversacion()
+
