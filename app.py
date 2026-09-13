@@ -79,16 +79,16 @@ st.markdown(
 
     /* Contenedor principal más ancho */
     .block-container {
-        max-width: 1000px !important;
+        max-width: 800px !important;
         width: 100% !important;
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
         box-sizing: border-box !important;
     }
 
     /* Título principal */
     h1 {
-        font-size: 42px !important;
+        font-size: 32px !important;
         white-space: normal !important;
         text-align: center !important;
         line-height: 1.2 !important;
@@ -343,7 +343,7 @@ col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     # Al estar dentro de col2, st.image centrará el logo automáticamente en el medio de la web
     if os.path.exists(LOGO_PATH):
-        st.image(LOGO_PATH, width=275)
+        st.image(LOGO_PATH, width=250)
     else:
         st.error(f"No se encontró el logo en: {LOGO_PATH}")
 
