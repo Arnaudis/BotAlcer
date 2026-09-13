@@ -42,7 +42,7 @@ if "mensajes" not in st.session_state:
 
     st.session_state.mensajes = [
         {
-            "rol": "assistant",
+            "rol": "Asistente",
             "texto": saludo_inicial
         }
     ]
@@ -114,7 +114,7 @@ def guardar_conversacion():
     mensajes_usuario = [
         msg["texto"]
         for msg in st.session_state.mensajes
-        if msg["rol"] == "user"
+        if msg["rol"] == "Usuario"
     ]
 
     if mensajes_usuario:
@@ -554,7 +554,7 @@ if st.session_state.contacto_estado == "pendiente":
             st.session_state.contacto_estado = "finalizado"
 
             st.session_state.mensajes.append({
-                "rol": "assistant",
+                "rol": "Asistente",
                 "texto": "Gracias. ¿En qué te puedo ayudar hoy?"
             })
 
@@ -601,7 +601,7 @@ if st.session_state.contacto_estado == "formulario":
             st.session_state.contacto_estado = "finalizado"
 
             st.session_state.mensajes.append({
-                "rol": "assistant",
+                "rol": "Asistente",
                 "texto": "Gracias. ¿En qué te puedo ayudar hoy?"
             })
 
@@ -619,18 +619,18 @@ if st.session_state.contacto_estado == "finalizado":
     # Entrada del usuario
     if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
         # Mostrar la pregunta en pantalla
-        with st.chat_message("user"):
+        with st.chat_message("Usuario"):
             st.write(query)
-        st.session_state.mensajes.append({"rol": "user", "texto": query})
+        st.session_state.mensajes.append({"rol": "Usuario", "texto": query})
         
         # Proceso RAG (ahora SOLO tu lógica real)
         with st.spinner("Pensando..."):
             answer = rag_query(query, llm, st.session_state.historial_conversacion,index,embeddings,k=1)
-            st.session_state.historial_conversacion.append({"usuario": query, "asistente": answer})
+            st.session_state.historial_conversacion.append({"Usuario": query, "Asistente": answer})
 
         # Mostrar la respuesta del Bot
-        with st.chat_message("assistant"):
+        with st.chat_message("Asistente"):
             st.write(answer)
-        st.session_state.mensajes.append({"rol": "assistant", "texto": answer})
+        st.session_state.mensajes.append({"rol": "Asistente", "texto": answer})
 
         guardar_conversacion()
