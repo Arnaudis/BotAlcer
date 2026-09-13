@@ -558,8 +558,12 @@ if st.session_state.contacto_estado == "finalizado" and not st.session_state.con
 
 # Renderizar todo el historial en pantalla
 for msg in st.session_state.mensajes:
-    with st.chat_message(msg["rol"]):
-        st.write(msg["texto"])
+    if msg["rol"] == "Asistente":
+        with st.chat_message(msg["rol"], avatar=ICON_PATH):
+            st.write(msg["texto"])
+    else:
+        with st.chat_message(msg["rol"]):
+            st.write(msg["texto"])
 
 
 # -------------------------------------------------------
@@ -657,7 +661,7 @@ if st.session_state.contacto_estado == "finalizado" and not st.session_state.con
             st.session_state.historial_conversacion.append({"Usuario": query, "Asistente": answer})
 
         # Mostrar la respuesta del Bot
-        with st.chat_message("Asistente"):
+        with st.chat_message("Asistente", avatar=ICON_PATH):
             st.write(answer)
         st.session_state.mensajes.append({"rol": "Asistente", "texto": answer})
 
