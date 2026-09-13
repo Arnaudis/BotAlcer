@@ -224,7 +224,7 @@ st.markdown(
         line-height: 1.2 !important;
         word-wrap: break-word !important;
         overflow-wrap: break-word !important;
-        margin-top: -20px !important;
+        margin-top: 0px !important;
         margin-bottom: 0px !important;
     }
 
