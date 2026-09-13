@@ -375,6 +375,12 @@ else:
 st.markdown("</div>", unsafe_allow_html=True)
 
 
+/* Subimos el título y el subtítulo */
+h1 {
+    margin-top: -25px !important;
+    margin-bottom: 5px !important;
+}
+
 #st.title("🏥 BotAlcer")
 st.title("Asistente sobre la Enfermedad Renal Crónica (ERC)")
 st.markdown(
