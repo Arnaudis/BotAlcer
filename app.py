@@ -647,7 +647,7 @@ if st.session_state.contacto_estado == "finalizado" and not st.session_state.con
 
     # Entrada del usuario
     # Avatar del usuario...
-    if st.session_state.nombre_contacto == "No lo ha proporcionado":
+    if st.session_state.nombre_contacto == "":
         avatar_usuario = "👤"
     else:
         avatar_usuario = "👤-"+st.session_state.nombre_contacto.strip()[0]
