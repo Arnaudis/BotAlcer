@@ -10,6 +10,8 @@ from langchain_ollama import ChatOllama
 from BotAlcer import inicializar_recursos_rag, rag_query
 # ver donde tarda
 import time
+from datetime import datetime
+import re
 
 
 
@@ -55,6 +57,122 @@ if "nombre_contacto" not in st.session_state:
 
 if "movil_contacto" not in st.session_state:
     st.session_state.movil_contacto = ""
+
+# Guardar la fecha y hora de inicio de la conversación
+if "inicio_conversacion" not in st.session_state:
+    st.session_state.inicio_conversacion = datetime.now()
+
+# Guardar la fecha y hora de la última interacción
+if "ultima_interaccion" not in st.session_state:
+    st.session_state.ultima_interaccion = st.session_state.inicio_conversacion
+
+# Guardar la ruta del archivo de la conversación
+if "archivo_conversacion" not in st.session_state:
+    st.session_state.archivo_conversacion = None
+
+# Carpeta donde se guardarán las conversaciones
+CONVERSACIONES_DIR = os.path.join(BASE_DIR, "conversaciones")
+os.makedirs(CONVERSACIONES_DIR, exist_ok=True)
+
+
+# Guardar toda la conversación en un archivo
+def guardar_conversacion():
+
+    # Actualizar la hora de la última interacción
+    st.session_state.ultima_interaccion = datetime.now()
+
+    texto_conversacion = ""
+
+    # Recorrer todos los mensajes de la conversación
+    for msg in st.session_state.mensajes:
+        texto_conversacion += f"{msg['rol'].upper()}: {msg['texto']}\n\n"
+
+    # Contar el número total de palabras de la conversación
+    palabras = re.findall(
+        r"\b[\wÁÉÍÓÚÜÑáéíóúüñ]+\b",
+        texto_conversacion
+    )
+
+    total_palabras = len(palabras)
+
+    # Obtener los datos de contacto
+    nombre = st.session_state.nombre_contacto.strip()
+
+    if nombre:
+        nombre = nombre
+    else:
+        nombre = "No lo ha proporcionado"
+
+    movil = st.session_state.movil_contacto.strip()
+
+    if movil:
+        movil = movil
+    else:
+        movil = "No lo ha proporcionado"
+
+    # Crear un resumen sencillo de la conversación
+    mensajes_usuario = [
+        msg["texto"]
+        for msg in st.session_state.mensajes
+        if msg["rol"] == "user"
+    ]
+
+    if mensajes_usuario:
+        resumen = (
+            "La persona ha realizado las siguientes consultas:\n"
+            + "\n".join(
+                f"- {mensaje}"
+                for mensaje in mensajes_usuario
+            )
+        )
+    else:
+        resumen = "No se han realizado consultas."
+
+    # Crear el nombre del archivo usando la fecha y hora de inicio
+    inicio = st.session_state.inicio_conversacion
+
+    nombre_archivo = (
+        f"{inicio.strftime('%Y%m%d_%H%M%S')}_{total_palabras}.txt"
+    )
+
+    ruta_archivo = os.path.join(
+        CONVERSACIONES_DIR,
+        nombre_archivo
+    )
+
+    # Eliminar el archivo anterior de esta conversación
+    # para mantener un único archivo actualizado
+    archivo_anterior = st.session_state.archivo_conversacion
+
+    if archivo_anterior and archivo_anterior != ruta_archivo:
+        if os.path.exists(archivo_anterior):
+            os.remove(archivo_anterior)
+
+    # Crear la cabecera de la conversación
+    cabecera = (
+        "==================================================\n"
+        "CONVERSACIÓN BOTALCER\n"
+        "==================================================\n\n"
+        f"Nombre: {nombre}\n"
+        f"Nº de móvil: {movil}\n"
+        f"Hora de inicio: {inicio.strftime('%d/%m/%Y %H:%M:%S')}\n"
+        f"Hora de finalización: "
+        f"{st.session_state.ultima_interaccion.strftime('%d/%m/%Y %H:%M:%S')}\n"
+        f"Número de palabras: {total_palabras}\n\n"
+        "RESUMEN:\n"
+        f"{resumen}\n\n"
+        "==================================================\n\n"
+        "CONVERSACIÓN\n"
+        "==================================================\n\n"
+    )
+
+    # Guardar la conversación completa
+    with open(ruta_archivo, "w", encoding="utf-8") as archivo:
+        archivo.write(cabecera)
+        archivo.write(texto_conversacion)
+
+    # Guardar la ruta actual en la sesión
+    st.session_state.archivo_conversacion = ruta_archivo
 
 
 
@@ -223,11 +341,6 @@ st.markdown(
             font-size: 20px !important;
         }
 
-        [data-testid="stHorizontalBlock"] {
-            margin-top: -4em !important;
-            margin-bottom: 0 !important;
-        }
-
     }
 
     /* --------------------------------------
@@ -265,12 +378,6 @@ st.markdown(
         [data-testid="stImage"] img {
             max-width: 75% !important;
             height: auto !important;
-        }
-
-        /* Ajuste del bloque del logo */
-        [data-testid="stHorizontalBlock"] {
-            margin-top: -3em !important;
-            margin-bottom: 0 !important;
         }
 
         /* Mensajes del chatbot */
@@ -451,6 +558,8 @@ if st.session_state.contacto_estado == "pendiente":
                 "texto": "Gracias. ¿En qué te puedo ayudar hoy?"
             })
 
+            guardar_conversacion()
+
             st.rerun()
 
 
@@ -496,6 +605,8 @@ if st.session_state.contacto_estado == "formulario":
                 "texto": "Gracias. ¿En qué te puedo ayudar hoy?"
             })
 
+            guardar_conversacion()
+
             st.rerun()
 
 
@@ -521,3 +632,5 @@ if st.session_state.contacto_estado == "finalizado":
         with st.chat_message("assistant"):
             st.write(answer)
         st.session_state.mensajes.append({"rol": "assistant", "texto": answer})
+
+        guardar_conversacion()
