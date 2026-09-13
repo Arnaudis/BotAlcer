@@ -23,9 +23,9 @@ services:
       - .env
     ports:
       - "8501:8501"
+    user: "1000:1000"
     volumes:
       - ./conversaciones:/app/conversaciones
-
-
+    
 volumes:
   ollama_data:
