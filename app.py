@@ -533,7 +533,7 @@ index, embeddings, llm = iniciar_componentes()
 # Comprobar automáticamente la inactividad de la conversación
 # Comprobar automáticamente la inactividad de la conversación 
 if st.session_state.contacto_estado == "finalizado" and not st.session_state.conversacion_cerrada and not st.session_state.procesando: 
-    st_autorefresh(interval=5000, key="control_inactividad") 
+    st_autorefresh(interval=180000, key="control_inactividad") 
 
     tiempo_inactivo = (datetime.now() - st.session_state.ultima_interaccion).total_seconds()
     if tiempo_inactivo >= 180:
