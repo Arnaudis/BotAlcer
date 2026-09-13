@@ -489,7 +489,7 @@ if os.path.exists(LOGO_PATH):
             align-items: center;
             width: 100%;
         ">
-            <a href="https://arnaudis.es">
+            <a href="https://arnaudis.es" target="_self">
                 <img
                     src="data:image/png;base64,{logo_base64}"
                     width="250"
