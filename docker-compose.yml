@@ -28,8 +28,10 @@ services:
     container_name: chatbot
     restart: unless-stopped
     depends_on:
-      - ollama
-      - permisos
+      ollama:
+        condition: service_started
+      permisos:
+        condition: service_completed_successfully
     env_file:
       - .env
     ports:
