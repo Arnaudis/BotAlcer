@@ -35,6 +35,9 @@ st.set_page_config(
 if "historial_conversacion" not in st.session_state:
     st.session_state.historial_conversacion = []
 
+if "procesando" not in st.session_state:
+    st.session_state.procesando = False
+
 if "mensajes" not in st.session_state:
     saludo_inicial = (
         "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER.\n"
@@ -528,25 +531,19 @@ def iniciar_componentes():
 index, embeddings, llm = iniciar_componentes()
 
 # Comprobar automáticamente la inactividad de la conversación
-if st.session_state.contacto_estado == "finalizado" and not st.session_state.conversacion_cerrada:
+# Comprobar automáticamente la inactividad de la conversación 
+if st.session_state.contacto_estado == "finalizado" and not st.session_state.conversacion_cerrada and not st.session_state.procesando: 
+    st_autorefresh(interval=5000, key="control_inactividad") 
 
-    st_autorefresh(interval=5000, key="control_inactividad")
-
-    tiempo_inactivo = (
-        datetime.now() - st.session_state.ultima_interaccion
-    ).total_seconds()
-
+    tiempo_inactivo = (datetime.now() - st.session_state.ultima_interaccion).total_seconds()
     if tiempo_inactivo >= 180:
-
         st.session_state.mensajes.append({
             "rol": "Asistente",
             "texto": "Han pasado unos minutos sin actividad. Me despido por ahora. ¡Gracias por utilizar BotAlcer!"
         })
 
         st.session_state.conversacion_cerrada = True
-
         guardar_conversacion()
-
         st.rerun()
 
 
@@ -656,9 +653,13 @@ if st.session_state.contacto_estado == "finalizado" and not st.session_state.con
         st.session_state.mensajes.append({"rol": "Usuario", "texto": query})
         
         # Proceso RAG (ahora SOLO tu lógica real)
+        st.session_state.procesando = True
+
         with st.spinner("Pensando..."):
             answer = rag_query(query, llm, st.session_state.historial_conversacion,index,embeddings,k=1)
             st.session_state.historial_conversacion.append({"Usuario": query, "Asistente": answer})
+
+        st.session_state.procesando = False
 
         # Mostrar la respuesta del Bot
         with st.chat_message("Asistente", avatar=ICON_PATH):
