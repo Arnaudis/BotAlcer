@@ -23,7 +23,7 @@ services:
       - "8501:8501"
     user: "1001:1001"
     volumes:
-      - ./conversaciones:/BotAlcer/conversaciones
+      - ./conversaciones:/app/conversaciones
 
 volumes:
   ollama_data:
