@@ -15,6 +15,8 @@ import re
 from streamlit_autorefresh import st_autorefresh
 from PIL import Image, ImageDraw, ImageFont
 import io
+import base64
+
 
 
 
@@ -474,25 +476,33 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(BASE_DIR, "pictures", "logoAlcer.png")
 
 # Contenedor centrado para el logo
-st.markdown(
-    """
-    <div style="
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-    ">
-    """,
-    unsafe_allow_html=True
-)
-
 if os.path.exists(LOGO_PATH):
-    st.image(LOGO_PATH, width=250)
+
+    with open(LOGO_PATH, "rb") as f:
+        logo_base64 = base64.b64encode(f.read()).decode()
+
+    st.markdown(
+        f"""
+        <div style="
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        ">
+            <a href="https://arnaudis.es" target="_blank">
+                <img
+                    src="data:image/png;base64,{logo_base64}"
+                    width="250"
+                    style="cursor: pointer;"
+                >
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 else:
     st.error(f"No se encontró el logo en: {LOGO_PATH}")
-
-st.markdown("</div>", unsafe_allow_html=True)
-
 
 #st.title("🏥 BotAlcer")
 st.title("Asistente sobre la Enfermedad Renal Crónica (ERC)")
