@@ -646,9 +646,15 @@ if st.session_state.contacto_estado == "formulario":
 if st.session_state.contacto_estado == "finalizado" and not st.session_state.conversacion_cerrada:
 
     # Entrada del usuario
+    # Avatar del usuario...
+    if st.session_state.nombre_contacto == "No lo ha proporcionado":
+        avatar_usuario = "Anónimo"
+    else:
+        avatar_usuario = nombre = st.session_state.nombre_contacto.strip().split(" ")[0]
+
     if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
         # Mostrar la pregunta en pantalla
-        with st.chat_message("Usuario"):
+        with st.chat_message("Usuario", avatar=avatar_usuario):
             st.write(query)
         st.session_state.mensajes.append({"rol": "Usuario", "texto": query})
         
