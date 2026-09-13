@@ -104,10 +104,10 @@ st.markdown(
         display: none !important; /* Esconder completamente la cabecera invisible */
     }
 
-    /* Subimos el logo y bajamos el título */
+    /* Subimos el logo */
     .block-container {
         padding-top: 0rem !important;
-        margin-top: -3rem !important;
+        margin-top: -1rem !important;
     }
 
     /* Centrar el logo */
