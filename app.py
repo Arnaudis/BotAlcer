@@ -106,7 +106,8 @@ st.markdown(
 
     /* Subimos el logo y bajamos el título */
     .block-container {
-        padding-top: 5rem !important;
+        padding-top: 0rem !important;
+        margin-top: -3rem !important;
     }
 
     /* Centrar el logo */
