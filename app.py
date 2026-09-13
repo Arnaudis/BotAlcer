@@ -648,9 +648,9 @@ if st.session_state.contacto_estado == "finalizado" and not st.session_state.con
     # Entrada del usuario
     # Avatar del usuario...
     if st.session_state.nombre_contacto == "No lo ha proporcionado":
-        avatar_usuario = "Anónimo"
+        avatar_usuario = "👤"
     else:
-        avatar_usuario = nombre = st.session_state.nombre_contacto.strip().split(" ")[0]
+        avatar_usuario = "👤-"+st.session_state.nombre_contacto.strip()[0]
 
     if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
         # Mostrar la pregunta en pantalla
