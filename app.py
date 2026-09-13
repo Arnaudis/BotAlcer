@@ -105,9 +105,23 @@ st.markdown(
     }
 
     /* Subimos el logo y bajamos el título */
-    [data-testid="stHorizontalBlock"] {
-        margin-top: -6em !important;    /* Desplaza la imagen hacia arriba para absorber el vacío */
-        margin-bottom: -1rem !important; /* Contrae el espacio vacío de la parte inferior de la imagen */
+    .block-container {
+        padding-top: 1rem !important;
+    }
+
+    /* Centrar el logo */
+    [data-testid="stImage"] {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+
+    [data-testid="stImage"] img {
+        margin-left: auto !important;
+        margin-right: auto !important;
+        max-width: 100% !important;
+        height: auto !important;
     }
 
     /* --------------------------------------
