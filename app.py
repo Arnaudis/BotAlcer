@@ -12,6 +12,8 @@ from BotAlcer import inicializar_recursos_rag, rag_query
 import time
 from datetime import datetime
 import re
+from streamlit_autorefresh import st_autorefresh
+
 
 
 
@@ -65,6 +67,10 @@ if "inicio_conversacion" not in st.session_state:
 # Guardar la fecha y hora de la última interacción
 if "ultima_interaccion" not in st.session_state:
     st.session_state.ultima_interaccion = st.session_state.inicio_conversacion
+
+# Controlar si la conversación está cerrada por inactividad
+if "conversacion_cerrada" not in st.session_state:
+    st.session_state.conversacion_cerrada = False
 
 # Guardar la ruta del archivo de la conversación
 if "archivo_conversacion" not in st.session_state:
@@ -521,6 +527,28 @@ def iniciar_componentes():
 # Se ejecuta una sola vez al arrancar la app o cuando la caché vence
 index, embeddings, llm = iniciar_componentes()
 
+# Comprobar automáticamente la inactividad de la conversación
+if st.session_state.contacto_estado == "finalizado" and not st.session_state.conversacion_cerrada:
+
+    st_autorefresh(interval=5000, key="control_inactividad")
+
+    tiempo_inactivo = (
+        datetime.now() - st.session_state.ultima_interaccion
+    ).total_seconds()
+
+    if tiempo_inactivo >= 180:
+
+        st.session_state.mensajes.append({
+            "rol": "Asistente",
+            "texto": "Han pasado unos minutos sin actividad. Me despido por ahora. ¡Gracias por utilizar BotAlcer!"
+        })
+
+        st.session_state.conversacion_cerrada = True
+
+        guardar_conversacion()
+
+        st.rerun()
+
 
 
 
@@ -614,7 +642,7 @@ if st.session_state.contacto_estado == "formulario":
 # 4.3. Chatbot
 # -------------------------------------------------------
 
-if st.session_state.contacto_estado == "finalizado":
+if st.session_state.contacto_estado == "finalizado" and not st.session_state.conversacion_cerrada:
 
     # Entrada del usuario
     if query := st.chat_input("¿En qué te puedo ayudar hoy?"):
