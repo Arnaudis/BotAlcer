@@ -79,7 +79,7 @@ st.markdown(
 
     /* Contenedor principal más ancho */
     .block-container {
-        max-width: 800px !important;
+        max-width: 1000px !important;
         width: 100% !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
