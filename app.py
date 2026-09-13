@@ -339,13 +339,26 @@ st.markdown(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(BASE_DIR, "pictures", "logoAlcer.png")
 
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    # Al estar dentro de col2, st.image centrará el logo automáticamente en el medio de la web
-    if os.path.exists(LOGO_PATH):
-        st.image(LOGO_PATH, width=250)
-    else:
-        st.error(f"No se encontró el logo en: {LOGO_PATH}")
+# Contenedor centrado para el logo
+st.markdown(
+    """
+    <div style="
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    ">
+    """,
+    unsafe_allow_html=True
+)
+
+if os.path.exists(LOGO_PATH):
+    st.image(LOGO_PATH, width=250)
+else:
+    st.error(f"No se encontró el logo en: {LOGO_PATH}")
+
+st.markdown("</div>", unsafe_allow_html=True)
+
 
 #st.title("🏥 BotAlcer")
 st.title("Asistente sobre la Enfermedad Renal Crónica (ERC)")
