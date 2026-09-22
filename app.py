@@ -238,7 +238,7 @@ st.markdown(
 
     /* Subimos el logo */
     .block-container {
-        padding-top: 1rem !important;
+        padding-top: 0.5rem !important;
         margin-top: -1rem !important;
     }
 
@@ -510,6 +510,7 @@ st.markdown(
     """
     <h3 style="
         text-align: center;
+        text-size: 10px;
         margin-top: -25px;
         margin-bottom: 10px;
     ">
