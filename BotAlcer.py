@@ -278,19 +278,28 @@ def rag_query(query, llm, history, index, embeddings, k=1):
         respuesta = "¡De nada! Estoy siempre a disposición para cualquier duda que tengas sobre la Enfermedad Renal Crónica o la asociación ALCER."
         return respuesta
 
-    # Existe un tema identificado anteriormente?
-    # Mantener el tema de la conversación para preguntas dependientes del contexto
+    # Existe un tema identificado anteriormente? Hay mantener los temas de conversación para posible preguntas dependientes del contexto
     consulta_rag = query
+
     if history:
         historial_rag = []
 
         for intercambio in history[-2:]:
             usuario_anterior = intercambio.get("usuario", "").strip()
+            asistente_anterior = intercambio.get("asistente", "").strip()
+
             if usuario_anterior:
                 historial_rag.append(f"Usuario: {usuario_anterior}")
 
+            if asistente_anterior:
+                historial_rag.append(f"Asistente: {asistente_anterior}")
+
         if historial_rag:
-            consulta_rag = "\n".join(historial_rag) + f"\nUsuario: {query}"
+            consulta_rag = "\n".join(historial_rag) + f"\nUsuario actual: {query}"
+
+    print("\n========== CONSULTA RAG CONTEXTUALIZADA ==========")
+    print(consulta_rag)
+    print("===================================================")
 
     # Generar embedding de la consulta del usuario, pero usando el historial.
     t0 = time.time()
