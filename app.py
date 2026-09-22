@@ -238,7 +238,7 @@ st.markdown(
 
     /* Subimos el logo */
     .block-container {
-        padding-top: 0rem !important;
+        padding-top: 1rem !important;
         margin-top: -1rem !important;
     }
 
@@ -467,7 +467,7 @@ st.markdown(
 
     </style>
     """,
-    unsafe_allow_html=True  # <-- ¡Muy importante para que el CSS funcione!
+    unsafe_allow_html=True
 )
 
 # Añado el logo centrado
@@ -513,7 +513,7 @@ st.markdown(
         margin-top: -25px;
         margin-bottom: 10px;
     ">
-        Por ALCER Las Palmas
+        Por ALCER Las Palmas y Arnaudis Suárez Sebastián
     </h3>
     """,
     unsafe_allow_html=True
