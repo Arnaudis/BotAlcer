@@ -228,7 +228,7 @@ st.markdown(
         margin-bottom: 0px !important;
     }
 
-    h1, h2, h3, p, span {
+    h1, h2, h3, h4, p, span {
         color: #ffffff !important;
     }
 
@@ -508,9 +508,8 @@ else:
 st.title("Asistente sobre la Enfermedad Renal Crónica (ERC)")
 st.markdown(
     """
-    <h3 style="
+    <h4 style="
         text-align: center;
-        text-size: 10px;
         margin-top: -25px;
         margin-bottom: 10px;
     ">
