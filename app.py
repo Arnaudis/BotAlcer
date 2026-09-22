@@ -513,7 +513,7 @@ st.markdown(
         margin-top: -25px;
         margin-bottom: 10px;
     ">
-        Por ALCER Las Palmas y Arnaudis Suárez Sebastián
+        Por &nbsp;<u>ALCER Las Palmas</u>&nbsp; y&nbsp; Arnaudis Suárez Sebastián
     </h4>
     """,
     unsafe_allow_html=True
