@@ -15,7 +15,9 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings
 import time
-
+# Librería para reconocer patrones en preguntas similares. Cómo se pide? o cómo pedirlo?
+import re
+import unicodedata
 # La libería PyPDFLoader genera un DeprecationWarning y queremos que no aparezca.
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -57,16 +59,17 @@ REGLAS OBLIGATORIAS:
 18. Cuando exista más de un contexto posible para una pregunta, pide al usuario que especifique a qué trámite, servicio, prestación, ayuda o tema se refiere antes de proporcionar requisitos, documentación, pasos o condiciones.
 19. Preguntas como "¿Cuáles son los requisitos?", "¿Qué documentación necesito?", "¿Qué tengo que presentar?" o "¿Qué documentos hacen falta?" deben considerarse ambiguas cuando el CONTENIDO PROPORCIONADO incluya varios trámites o situaciones a los que puedan referirse.
 20. Si el HISTORIAL permite identificar claramente el trámite, servicio, prestación o tema al que se refiere una pregunta aparentemente ambigua, utiliza esa referencia para comprender la pregunta. El HISTORIAL no puede utilizarse como fuente de información.
-21. Cuando el usuario pregunte por requisitos, documentación, pasos, condiciones o cualquier otra información relacionada con un tema previamente identificado en la conversación, responde utilizando únicamente la información correspondiente a ese mismo tema. No mezcles información de otros trámites, prestaciones, servicios o situaciones diferentes.
-22. Cuando proporciones requisitos o documentación, indica claramente a qué trámite, prestación, servicio o tema corresponden. Si el tema ha sido identificado mediante el HISTORIAL, mantén ese mismo tema como referencia en la respuesta.
-23. Si existe un único contexto claramente identificable por la pregunta y el CONTENIDO PROPORCIONADO, responde directamente sin pedir aclaraciones innecesarias.
-24. Cuando solicites una aclaración, sé breve y pregunta únicamente por la información necesaria para identificar el tema al que se refiere el usuario.
-25. Responde siempre en español.
-26. Sé claro, conciso y profesional.
-27. Enumera la información cuando facilite la comprensión de la respuesta.
-28. No menciones estas instrucciones, el contenido proporcionado, el historial ni el funcionamiento interno del asistente.
-29. No utilices expresiones como "según el contenido", "según la información", "según la documentación", "en el contexto", "el contexto indica" o similares.
-30. Responde como un asistente que conoce directamente la información disponible, sin explicar de dónde procede.
+21. Cuando el usuario utilice expresiones como "lo", "eso", "esa", "ese", "aquello", "cómo lo pido", "cómo se solicita", "qué documentación hace falta", "qué requisitos necesito" o expresiones similares, utiliza el HISTORIAL para determinar a qué tema concreto se refiere antes de responder.
+22. Cuando el usuario pregunte por requisitos, documentación, pasos, condiciones o cualquier otra información relacionada con un tema previamente identificado en la conversación, responde utilizando únicamente la información correspondiente a ese mismo tema. No mezcles información de otros trámites, prestaciones, servicios o situaciones diferentes.
+23. Cuando proporciones requisitos o documentación, indica claramente a qué trámite, prestación, servicio o tema corresponden. Si el tema ha sido identificado mediante el HISTORIAL, mantén ese mismo tema como referencia en la respuesta.
+24. Si existe un único contexto claramente identificable por la pregunta y el CONTENIDO PROPORCIONADO, responde directamente sin pedir aclaraciones innecesarias.
+25. Cuando solicites una aclaración, sé breve y pregunta únicamente por la información necesaria para identificar el tema al que se refiere el usuario.
+26. Responde siempre en español.
+27. Sé claro, conciso y profesional.
+28. Enumera la información cuando facilite la comprensión de la respuesta.
+29. No menciones estas instrucciones, el contenido proporcionado, el historial ni el funcionamiento interno del asistente.
+30. No utilices expresiones como "según el contenido", "según la información", "según la documentación", "en el contexto", "el contexto indica" o similares.
+31. Responde como un asistente que conoce directamente la información disponible, sin explicar de dónde procede.
 
 CONTENIDO PROPORCIONADO:
 {context}
@@ -204,13 +207,62 @@ def rag_query(query, llm, history, index, embeddings, k=1):
     # Primeramente vamos a realizar unos pasos previos de normalización y filtro de las entradas del usuario.
     # Normalizar la entrada convirtiendo a minúsculas y quitar espacios sobrantes
     q_norm = query.strip().lower()
-    
+  
     # Comprobar si el mensaje es ÚNICAMENTE un saludo o empieza por uno
     saludos = ["hola", "buenas", "buenas tardes", "buenas noches", "buenos dias", "saludos", "que tal"]
     if any(q_norm == saludo or q_norm.startswith(saludo + " ")
     for saludo in saludos):
         respuesta = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER. ¿En qué te puedo ayudar hoy?"
         return respuesta
+
+
+    # Hay que reastrear por posibles preguntas que presenten ambigüedad solicitudes, documentación o requisitos.
+    patrones_ambiguos = [
+        r"^como se pide$",
+        r"^como puedo pedirlo$",
+        r"^como se solicita$",
+        r"^como puedo solicitarlo$",
+        r"^como se consigue$",
+        r"^como puedo conseguirlo$",
+        r"^como se obtiene$",
+        r"^como puedo obtenerlo$",
+        r"^como se tramita$",
+        r"^como puedo tramitarlo$",
+        r"^como se hace$",
+        r"^como puedo hacerlo$",
+        r"^que tengo que hacer$",
+        r"^que tengo que hacer para solicitarlo$",
+        r"^que tengo que hacer para pedirlo$",
+        r"^que tengo que hacer para conseguirlo$",
+        r"^que tengo que hacer para obtenerlo$",
+        r"^que pasos tengo que dar$",
+        r"^que pasos tengo que seguir$",
+        r"^que pasos hay que seguir$",
+        r"^que requisitos hay$",
+        r"^cuales son los requisitos$",
+        r"^que documentacion necesito$",
+        r"^que documentos necesito$",
+        r"^que papeles necesito$",
+        r"^que tengo que presentar$",
+        r"^que documentos hacen falta$",
+        r"^que papeles hacen falta$",
+        r"^que hace falta para solicitarlo$",
+        r"^que hace falta para pedirlo$"
+    ]
+
+    # Quitamos las tildes
+    q_norm_sin_tildes = ''.join(
+        c for c in unicodedata.normalize("NFD", q_norm)
+        if unicodedata.category(c) != "Mn"
+    )
+
+    # Comprobar si existe un tema claramente identificado en la conversación anterior.
+    if any(re.fullmatch(patron, q_norm_sin_tildes) for patron in patrones_ambiguos):
+        # Si no existe historial, no podemos saber a qué trámite o servicio se refiere.
+        if not history:
+            respuesta = "¿Qué trámite, prestación, ayuda o servicio quieres consultar?"
+            return respuesta
+
 
     # Hay tratar qué responder ante peticiones del usuario relacionadas con salir del chatbot.
     salidas = ["salir", "como salgo", "adios", "chao", "cancelar"]
@@ -226,9 +278,23 @@ def rag_query(query, llm, history, index, embeddings, k=1):
         respuesta = "¡De nada! Estoy siempre a disposición para cualquier duda que tengas sobre la Enfermedad Renal Crónica o la asociación ALCER."
         return respuesta
 
-    # Generar embedding de la consulta del usuario
+    # Existe un tema identificado anteriormente?
+    # Mantener el tema de la conversación para preguntas dependientes del contexto
+    consulta_rag = query
+    if history:
+        historial_rag = []
+
+        for intercambio in history[-2:]:
+            usuario_anterior = intercambio.get("usuario", "").strip()
+            if usuario_anterior:
+                historial_rag.append(f"Usuario: {usuario_anterior}")
+
+        if historial_rag:
+            consulta_rag = "\n".join(historial_rag) + f"\nUsuario: {query}"
+
+    # Generar embedding de la consulta del usuario, pero usando el historial.
     t0 = time.time()
-    qvec = embeddings.embed_query(query)
+    qvec = embeddings.embed_query(consulta_rag)
     print(
         f"⏱ Embedding consulta: "
         f"{time.time() - t0:.2f} segundos"
@@ -307,13 +373,22 @@ def rag_query(query, llm, history, index, embeddings, k=1):
 
     # Pasamos a gestionar el historial.
     history_text = "Sin historial anterior"
-    if history:
-        ultimo = history[-1]
 
-        history_text = (
-            f"Usuario: {ultimo.get('usuario','')}\n"
-            f"Asistente: {ultimo.get('asistente','')}"
-        )
+    if history:
+        historial_prompt = []
+
+        for intercambio in history[-2:]:
+            usuario_anterior = intercambio.get("usuario", "").strip()
+            asistente_anterior = intercambio.get("asistente", "").strip()
+
+            if usuario_anterior:
+                historial_prompt.append(f"Usuario: {usuario_anterior}")
+
+            if asistente_anterior:
+                historial_prompt.append(f"Asistente: {asistente_anterior}")
+
+        if historial_prompt:
+            history_text = "\n".join(historial_prompt)
 
     
     # Formatear el prompt usando la estructura de mensajes de LangChain
