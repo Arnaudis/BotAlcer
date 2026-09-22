@@ -228,7 +228,7 @@ st.markdown(
         margin-bottom: 0px !important;
     }
 
-    h1, h2, h3, h4, p, span {
+    h1, h2, h3, h5, p, span {
         color: #ffffff !important;
     }
 
@@ -514,7 +514,7 @@ st.markdown(
         margin-bottom: 10px;
     ">
         Por ALCER Las Palmas y Arnaudis Suárez Sebastián
-    </h3>
+    </h4>
     """,
     unsafe_allow_html=True
 )
