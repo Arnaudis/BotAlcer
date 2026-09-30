@@ -196,6 +196,20 @@ def inicializar_recursos_rag():
     else:
         print(f"Pinecone contiene {total} vectores. No se recargan los documentos.")
 
+    # Preparamos el modelo para que la primera consulta real no sea tan larga
+    try:
+        embeddings.embed_query("hola")
+        requests.post(
+            f"{ollama_url}/api/generate",
+            json={"model": "qwen3:1.7b", "prompt": "hola", "stream": False,
+                  "think": False, "keep_alive": -1,
+                  "options": {"num_predict": 1, "num_ctx": 2048}},
+            timeout=300,
+        )
+    except Exception as e:
+        print("Precalentamiento fallido:", e)
+
+
     return index, embeddings
 
 
