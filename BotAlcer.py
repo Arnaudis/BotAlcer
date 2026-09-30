@@ -20,6 +20,8 @@ import re
 import unicodedata
 # La libería PyPDFLoader genera un DeprecationWarning y queremos que no aparezca.
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+import requests
+import json
 
 
 
@@ -29,6 +31,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 # ------------------
 
 # Plantilla estructurada utilizando los roles nativos del modelo
+# Para optimizar, quitar 16, 20, 24, 27 y 30. Comparar...
 system_template = """
 Eres BotAlcer, un asistente especializado en Enfermedad Renal Crónica (ERC) y en los servicios de la asociación ALCER Las Palmas.
 
@@ -202,16 +205,15 @@ def inicializar_recursos_rag():
 # 4. Función RAG
 # --------------
 
-def rag_query(query, llm, history, index, embeddings, k=1):
+def rag_query(query, llm, history, index, embeddings, k=1, on_token=None):
     inicio_total = time.time()
     # Primeramente vamos a realizar unos pasos previos de normalización y filtro de las entradas del usuario.
-    # Normalizar la entrada convirtiendo a minúsculas y quitar espacios sobrantes
-    q_norm = query.strip().lower()
+    # Normalizar la entrada convirtiendo a minúsculas y quitar espacios sobrantes. Quitaremos tildes y signos desde el principio.
+    q_norm = re.sub(r"[^\w\s]", "", "".join(c for c in unicodedata.normalize("NFD", query.strip().lower()) if unicodedata.category(c) != "Mn"))
   
     # Comprobar si el mensaje es ÚNICAMENTE un saludo o empieza por uno
     saludos = ["hola", "buenas", "buenas tardes", "buenas noches", "buenos dias", "saludos", "que tal"]
-    if any(q_norm == saludo or q_norm.startswith(saludo + " ")
-    for saludo in saludos):
+    if any(q_norm == saludo or q_norm.startswith(saludo + " ") for saludo in saludos) and len(q_norm.split()) <= 3:
         respuesta = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER. ¿En qué te puedo ayudar hoy?"
         return respuesta
 
@@ -266,33 +268,28 @@ def rag_query(query, llm, history, index, embeddings, k=1):
 
     # Hay tratar qué responder ante peticiones del usuario relacionadas con salir del chatbot.
     salidas = ["salir", "como salgo", "adios", "chao", "cancelar"]
-    if any(q_norm == salida or q_norm.startswith(salida + " ")
-    for salida in salidas):
+    if any(q_norm == salida or q_norm.startswith(salida + " ") for salida in salidas) and len(q_norm.split()) <= 2:
         respuesta = "BotAlcer se despide de ti. ¡Hasta pronto!"
         return respuesta
 
     # Tenemos que dar respuesta al usuario que se siente agradecido.
     agradecimientos = ["gracias", "muchas gracias", "ok gracias", "perfecto gracias"]
-    if any(q_norm == agradecimiento or q_norm.startswith(agradecimiento + " ")
-    for agradecimiento in agradecimientos):
+    if any(q_norm == agradecimiento or q_norm.startswith(agradecimiento + " ") for agradecimiento in agradecimientos) and len(q_norm.split()) <= 3:
         respuesta = "¡De nada! Estoy siempre a disposición para cualquier duda que tengas sobre la Enfermedad Renal Crónica o la asociación ALCER."
         return respuesta
 
     # Existe un tema identificado anteriormente? Hay mantener los temas de conversación para posible preguntas dependientes del contexto
     consulta_rag = query
 
-    if history:
+    if history and len(query.split()) <= 6:
         historial_rag = []
 
-        for intercambio in history[-2:]:
+        for intercambio in history[-1:]:
             usuario_anterior = intercambio.get("usuario", "").strip()
             asistente_anterior = intercambio.get("asistente", "").strip()
 
             if usuario_anterior:
                 historial_rag.append(f"Usuario: {usuario_anterior}")
-
-            if asistente_anterior:
-                historial_rag.append(f"Asistente: {asistente_anterior}")
 
         if historial_rag:
             consulta_rag = "\n".join(historial_rag) + f"\nUsuario actual: {query}"
@@ -319,7 +316,7 @@ def rag_query(query, llm, history, index, embeddings, k=1):
     matches = res.get("matches", [])
     
     if not matches:
-        return "No dispongo información sobre la cuestión solicitada"
+        return "No dispongo de información suficiente en la documentación disponible."
     
     # Filtrar por similitud mínima de 0.25
     matches = [m for m in matches if m["score"] >= 0.25]
@@ -327,7 +324,7 @@ def rag_query(query, llm, history, index, embeddings, k=1):
     matches = sorted(matches, key=lambda x: x.get("score",0), reverse=True)[:k]
     
     if not matches:
-        return "No dispongo información sobre la cuestión solicitada"
+        return "No dispongo de información suficiente en la documentación disponible."
 
     # Comprobar similitud de las preguntas
     print("\n========== BÚSQUEDA RAG ==========")
@@ -371,9 +368,9 @@ def rag_query(query, llm, history, index, embeddings, k=1):
         if not text.strip():
             continue
 
-        context_parts.append(
-            f"[Fuente: {source} | Página: {page}]\n{text}"
-        )
+        # Para añadir el chunk recuperado a la lista context_parts, que formará el context que se inserta en el prompt.
+        #context_parts.append(f"[Fuente: {source} | Página: {page}]\n{text}")
+        context_parts.append(text)
 
     if not context_parts:
         return "No dispongo de información suficiente en la documentación disponible."
@@ -386,9 +383,9 @@ def rag_query(query, llm, history, index, embeddings, k=1):
     if history:
         historial_prompt = []
 
-        for intercambio in history[-2:]:
+        for intercambio in history[-1:]:
             usuario_anterior = intercambio.get("usuario", "").strip()
-            asistente_anterior = intercambio.get("asistente", "").strip()
+            asistente_anterior = intercambio.get("asistente", "").strip()[:300]
 
             if usuario_anterior:
                 historial_prompt.append(f"Usuario: {usuario_anterior}")
@@ -411,35 +408,35 @@ def rag_query(query, llm, history, index, embeddings, k=1):
     PREGUNTA DEL USUARIO:
     {query}
 
-    RESPONDE A LA PREGUNTA UTILIZANDO EXCLUSIVAMENTE EL CONTEXTO.
+    RESPONDE A LA PREGUNTA UTILIZANDO EXCLUSIVAMENTE EL CONTENIDO PROPORCIONADO.
     RESPONDE SIEMPRE EN ESPAÑOL.
     """
 
     # Respuesta del modelo tras invocarlo
     t0 = time.time()
 
-    import requests
-
-    response = requests.post(
+    contenido = ""
+    data = {}
+    with requests.post(
         f"{os.getenv('OLLAMA_HOST', 'http://ollama:11434')}/api/generate",
-        json={
-            "model": "qwen3:1.7b",
-            "prompt": prompt,
-            "stream": False,
-            "think": False,
+        json={"model": "qwen3:1.7b", "prompt": prompt, "stream": True,
+            "think": False, "keep_alive": -1,
             "options": {
-                "temperature": 0.1,
-                "num_predict": 250,
-                "num_ctx": 2048,
+                "temperature": 0.1, "num_predict": 250, "num_ctx": 2048,
             },
         },
-        timeout=300
-    )
+        stream=True, timeout=300) as response:
+        response.raise_for_status()
+        for linea in response.iter_lines():
+            if not linea:
+                continue
+            data = json.loads(linea)
+            contenido += data.get("response", "")
+            if on_token and data.get("response"):
+                on_token(contenido)
+            if data.get("done"):
+                break
 
-    response.raise_for_status()
-    data = response.json()
-
-    contenido = data.get("response", "")
 
     print("\n========== MÉTRICAS OLLAMA ==========")
     print("prompt_eval_count:", data.get("prompt_eval_count"))

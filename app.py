@@ -6,7 +6,6 @@
 
 import streamlit as st
 import os
-from langchain_ollama import ChatOllama
 from BotAlcer import inicializar_recursos_rag, rag_query
 # ver donde tarda
 import time
@@ -532,14 +531,10 @@ st.markdown(
 def iniciar_componentes():
     # Inicializa Pinecone, Embeddings y verifica el índice en botalcer.py
     index, embeddings = inicializar_recursos_rag()
-
-    # Inicializa el LLM
-    ollama_url = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-    llm = ChatOllama(model="qwen3:1.7b", base_url=ollama_url, reasoning=False, temperature=0.1, num_predict=120, num_ctx=2048,)
-    return index, embeddings, llm
+    return index, embeddings
 
 # Se ejecuta una sola vez al arrancar la app o cuando la caché vence
-index, embeddings, llm = iniciar_componentes()
+index, embeddings = iniciar_componentes()
 
 # Comprobar automáticamente la inactividad de la conversación
 # Comprobar automáticamente la inactividad de la conversación 
@@ -698,20 +693,22 @@ if st.session_state.contacto_estado == "finalizado" and not st.session_state.con
         # Mostrar la pregunta en pantalla
         with st.chat_message("Usuario", avatar=avatar_usuario):
             st.write(query)
+
         st.session_state.mensajes.append({"rol": "Usuario", "texto": query})
-        
+       
         # Proceso RAG (ahora SOLO tu lógica real)
         st.session_state.procesando = True
 
-        with st.spinner("Pensando..."):
-            answer = rag_query(query, llm, st.session_state.historial_conversacion,index,embeddings,k=1)
-            st.session_state.historial_conversacion.append({"Usuario": query, "Asistente": answer})
+        # Mostrar la respuesta del Bot, que se va escribiendo mientras se genera.
+        with st.chat_message("Asistente", avatar=ICON_PATH):
+            hueco = st.empty()
+            with st.spinner("Pensando..."):
+                answer = rag_query(query, None, st.session_state.historial_conversacion,index,embeddings,k=1, on_token=hueco.write)
+            hueco.write(answer)
+        st.session_state.historial_conversacion.append({"usuario": query, "asistente": answer})
 
         st.session_state.procesando = False
 
-        # Mostrar la respuesta del Bot
-        with st.chat_message("Asistente", avatar=ICON_PATH):
-            st.write(answer)
         st.session_state.mensajes.append({"rol": "Asistente", "texto": answer})
 
         guardar_conversacion()
