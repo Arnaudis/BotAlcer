@@ -295,7 +295,13 @@ def rag_query(query, llm, history, index, embeddings, k=1, on_token=None):
     # Existe un tema identificado anteriormente? Hay mantener los temas de conversación para posible preguntas dependientes del contexto
     consulta_rag = query
 
-    if history and len(query.split()) <= 6:
+    # Y si hacemos preguntas con referencia a pregunta anterior...
+    referencias = ["lo", "eso", "esa", "ese", "esto", "aquello"]
+    depende_del_historial = (
+        any(re.fullmatch(p, q_norm) for p in patrones_ambiguos)
+        or any(r in q_norm.split() for r in referencias)
+    )
+    if history and depende_del_historial:
         historial_rag = []
 
         for intercambio in history[-1:]:
@@ -400,12 +406,8 @@ def rag_query(query, llm, history, index, embeddings, k=1, on_token=None):
         for intercambio in history[-1:]:
             usuario_anterior = intercambio.get("usuario", "").strip()
             asistente_anterior = intercambio.get("asistente", "").strip()[:300]
-
             if usuario_anterior:
                 historial_prompt.append(f"Usuario: {usuario_anterior}")
-
-            if asistente_anterior:
-                historial_prompt.append(f"Asistente: {asistente_anterior}")
 
         if historial_prompt:
             history_text = "\n".join(historial_prompt)
@@ -423,6 +425,7 @@ def rag_query(query, llm, history, index, embeddings, k=1, on_token=None):
     {query}
 
     RESPONDE A LA PREGUNTA UTILIZANDO EXCLUSIVAMENTE EL CONTENIDO PROPORCIONADO.
+    SI EL CONTENIDO NO RESPONDE A LA PREGUNTA, RESPONDE EXACTAMENTE: "No dispongo de información suficiente en la documentación disponible."
     RESPONDE SIEMPRE EN ESPAÑOL.
     """
 
