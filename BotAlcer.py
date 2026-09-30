@@ -159,11 +159,10 @@ def inicializar_recursos_rag():
         loader = PyPDFLoader(PDF_PATH)
         raw_docs = loader.load()
 
-        # Divido el PDF en chunks
+        # Divido el PDF en chunks pero que utilice para guiarse los cierres de pregunta
         splitter = RecursiveCharacterTextSplitter(
-            # El chunk es la partición del texto en trozos más pequeñas. Hacemos que cada trozo tenga 700 caracteres, 
-            # con un solapamiento de 150 caracteres entre ellos, que es el chunk_overlap. Esto ayuda a mantener el contexto cuando se dividen los documentos.
-            chunk_size=500, chunk_overlap=100
+            chunk_size=800, chunk_overlap=100,
+            separators=["\n¿", "¿", "\n\n", "\n", " ", ""]
         )
         docs = splitter.split_documents(raw_docs)
 
