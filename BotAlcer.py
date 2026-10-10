@@ -196,7 +196,7 @@ def inicializar_recursos_rag():
             f"{ollama_url}/api/generate",
             json={"model": "qwen3:1.7b", "prompt": "hola", "stream": False,
                   "think": False, "keep_alive": -1,
-                  "options": {"num_predict": 1, "num_ctx": 3096}},
+                  "options": {"num_predict": 1, "num_ctx": 3072}},
             timeout=300,
         )
     except Exception as e:
@@ -432,7 +432,7 @@ def rag_query(query, llm, history, index, embeddings, k=1, on_token=None):
         json={"model": "qwen3:1.7b", "prompt": prompt, "stream": True,
             "think": False, "keep_alive": -1,
             "options": {
-                "temperature": 0.1, "num_predict": 800, "num_ctx": 3096,
+                "temperature": 0.1, "num_predict": 800, "num_ctx": 3072,
             },
         },
         stream=True, timeout=300) as response:
