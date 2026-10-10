@@ -196,7 +196,7 @@ def inicializar_recursos_rag():
             f"{ollama_url}/api/generate",
             json={"model": "qwen3:1.7b", "prompt": "hola", "stream": False,
                   "think": False, "keep_alive": -1,
-                  "options": {"num_predict": 800, "num_ctx": 3096}},
+                  "options": {"num_predict": 1, "num_ctx": 3096}},
             timeout=300,
         )
     except Exception as e:
