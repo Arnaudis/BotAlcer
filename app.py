@@ -703,7 +703,7 @@ if st.session_state.contacto_estado == "finalizado" and not st.session_state.con
         with st.chat_message("Asistente", avatar=ICON_PATH):
             hueco = st.empty()
             with st.spinner("Pensando..."):
-                answer = rag_query(query, None, st.session_state.historial_conversacion,index,embeddings,k=1, on_token=hueco.write)
+                answer = rag_query(query, None, st.session_state.historial_conversacion,index,embeddings,k=2, on_token=hueco.write)
             hueco.write(answer)
         st.session_state.historial_conversacion.append({"usuario": query, "asistente": answer})
 

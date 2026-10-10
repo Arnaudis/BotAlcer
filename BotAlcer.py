@@ -212,7 +212,7 @@ def inicializar_recursos_rag():
 # 4. Función RAG
 # --------------
 
-def rag_query(query, llm, history, index, embeddings, k=1, on_token=None):
+def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     inicio_total = time.time()
     # Primeramente vamos a realizar unos pasos previos de normalización y filtro de las entradas del usuario.
     # Normalizar la entrada convirtiendo a minúsculas y quitar espacios sobrantes. Quitaremos tildes y signos desde el principio.
