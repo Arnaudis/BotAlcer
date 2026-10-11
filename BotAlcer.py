@@ -192,9 +192,10 @@ def inicializar_recursos_rag():
     # Preparamos el modelo para que la primera consulta real no sea tan larga
     try:
         embeddings.embed_query("hola")
+        prefijo = system_template.split("{context}")[0]   # parte fija de las reglas
         requests.post(
             f"{ollama_url}/api/generate",
-            json={"model": "qwen3:1.7b", "prompt": "hola", "stream": False,
+            json={"model": "qwen3:1.7b", "prompt": prefijo, "stream": False,
                   "think": False, "keep_alive": -1,
                   "options": {"num_predict": 1, "num_ctx": 3072}},
             timeout=300,
@@ -418,6 +419,7 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
 
     #context = "\n\n".join(context_parts)
     context = preparar_contexto(context_parts)
+    print(context)
 
 
     # Pasamos a gestionar el historial.
