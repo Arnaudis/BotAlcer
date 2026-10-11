@@ -212,6 +212,34 @@ def inicializar_recursos_rag():
 # 4. Función RAG
 # --------------
 
+# Preparo una función para unir las respuestas a las preguntas que tienen dos mitades y se recuperan en dos chunks separados.
+RE_TITULO = re.compile(r"^\s*(¿[^¿]*?\?)\s*\((\d) de \d\)\s*", re.S)
+
+def preparar_contexto(textos):
+    """Une las mitades '(1 de 2)' / '(2 de 2)' de una misma pregunta, en orden,
+    quitando la marca y el título repetido."""
+    grupos, orden = {}, []
+    for pos, t in enumerate(textos):
+        m = RE_TITULO.match(t)
+        if m:
+            titulo = re.sub(r"\s+", " ", m.group(1)).strip()
+            parte, cuerpo = int(m.group(2)), t[m.end():].strip()
+        else:
+            titulo, parte, cuerpo = None, 0, t.strip()
+        clave = re.sub(r"\s+", "", titulo).lower() if titulo else f"_{pos}"
+        if clave not in grupos:
+            grupos[clave] = []
+            orden.append(clave)
+        grupos[clave].append((parte, titulo, cuerpo))
+    salida = []
+    for clave in orden:
+        g = sorted(grupos[clave], key=lambda x: x[0])
+        titulo = g[0][1]
+        cuerpo = "\n".join(c for _, _, c in g)
+        salida.append(f"{titulo}\n{cuerpo}" if titulo else cuerpo)
+    return "\n\n".join(salida)
+
+
 def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     inicio_total = time.time()
     # Primeramente vamos a realizar unos pasos previos de normalización y filtro de las entradas del usuario.
@@ -388,7 +416,9 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     if not context_parts:
         return "No dispongo de información suficiente en la documentación disponible."
 
-    context = "\n\n".join(context_parts)
+    #context = "\n\n".join(context_parts)
+    context = preparar_contexto(context_parts)
+
 
     # Pasamos a gestionar el historial.
     history_text = "Sin historial anterior"
