@@ -449,9 +449,8 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     PREGUNTA DEL USUARIO:
     {query}
 
-    RESPONDE A LA PREGUNTA UTILIZANDO EXCLUSIVAMENTE EL CONTENIDO PROPORCIONADO.
-    SI EL CONTENIDO NO RESPONDE A LA PREGUNTA, RESPONDE EXACTAMENTE: "No dispongo de información suficiente en la documentación disponible."
-    RESPONDE SIEMPRE EN ESPAÑOL.
+    Responde usando solo el contenido proporcionado. Si hay una lista, incluye TODOS sus elementos sin omitir ninguno. No añadas frases de cierre ni comentarios sobre el contenido. Sin negritas. Responde siempre en español.
+    Solo si el contenido no tiene nada relacionado con la pregunta, responde exactamente: "No dispongo de información suficiente en la documentación disponible."
     """
 
     # Respuesta del modelo tras invocarlo
