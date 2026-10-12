@@ -400,8 +400,6 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     if len(matches) > 1:
         c0 = clave_pregunta(matches[0].get("metadata", {}).get("text", ""))
         c1 = clave_pregunta(matches[1].get("metadata", {}).get("text", ""))
-        hermano = c0 is not None and c0 == c1
-        cercano = matches[0]["score"] - matches[1]["score"] <= 0.03
         if not (hermano or cercano):
             matches = matches[:1]
 
