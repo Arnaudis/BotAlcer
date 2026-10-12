@@ -242,6 +242,11 @@ def preparar_contexto(textos):
     return "\n\n".join(salida)
 
 
+def clave_pregunta(texto):
+    m = re.match(r"^\s*(¿[^¿]*?\?)", texto, re.S)
+    return re.sub(r"\s+", "", m.group(1)).lower() if m else None
+
+
 def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     inicio_total = time.time()
     # Primeramente vamos a realizar unos pasos previos de normalización y filtro de las entradas del usuario.
@@ -369,6 +374,15 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     if not matches:
         return "No dispongo de información suficiente en la documentación disponible."
 
+    if len(matches) > 1:
+        c0 = clave_pregunta(matches[0].get("metadata", {}).get("text", ""))
+        c1 = clave_pregunta(matches[1].get("metadata", {}).get("text", ""))
+        hermano = c0 is not None and c0 == c1
+        cercano = matches[0]["score"] - matches[1]["score"] <= 0.03
+        if not (hermano or cercano):
+            matches = matches[:1]
+
+
     # Comprobar similitud de las preguntas
     print("\n========== BÚSQUEDA RAG ==========")
     print(f"Pregunta: {query}")
@@ -422,7 +436,6 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     context = preparar_contexto(context_parts)
     print(context)
 
-
     # Pasamos a gestionar el historial.
     history_text = "Sin historial anterior"
 
@@ -450,7 +463,7 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     PREGUNTA DEL USUARIO:
     {query}
     Responde usando solo el contenido proporcionado. Cuando el contenido sea una lista, reprodúcela completa, viñeta a viñeta y en el mismo orden, sin omitir, dividir ni resumir ninguna: conserva cada viñeta entera, con su encabezado (lo que va antes de los dos puntos) y todos sus datos. Incluye toda la información del contenido que responda a la pregunta. No añadas frases de cierre ni comentarios sobre el contenido. Sin negritas. Responde siempre en español.
-    Solo si el contenido no tiene nada relacionado con la pregunta, responde exactamente: "No dispongo de información suficiente en la documentación disponible."
+    Si el contenido no responde a lo que se pregunta, aunque trate un tema parecido, responde exactamente: "No dispongo de información suficiente en la documentación disponible."
     """
 
     # Respuesta del modelo tras invocarlo
