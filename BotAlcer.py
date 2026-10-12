@@ -367,8 +367,19 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
         respuesta = "¡De nada! Estoy siempre a disposición para cualquier duda que tengas sobre la Enfermedad Renal Crónica o la asociación ALCER."
         return respuesta
 
+    # Consejo médico (qué tomar, dosis...): no corresponde a este asistente
+    consejo_medico = (
+        re.search(r"\b(que|cual)\b.*\b(medicacion|medicamento|medicamentos|pastilla|pastillas|farmaco|farmacos)\b.*\b(tomar|recomiendas|recomienda)\b", q_norm)
+        or re.search(r"\b(dosis|cuanto)\b.*\b(tomar|medicacion|medicamento)\b", q_norm)
+        or re.search(r"\bque\b.*\b(tomar|tomo)\b.*\b(tension|dolor|fiebre|azucar|colesterol)\b", q_norm)
+    )
+    if consejo_medico:
+        return "No puedo ofrecer recomendaciones médicas. Consulta con tu médico o nefrólogo."
+
+
     # Existe un tema identificado anteriormente? Hay mantener los temas de conversación para posible preguntas dependientes del contexto
     consulta_rag = query
+
 
     # Y si hacemos preguntas con referencia a pregunta anterior...
     referencias = ["lo", "eso", "esa", "ese", "esto", "aquello"]
@@ -421,8 +432,11 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     
     
     # Ordeno los resultados y quiero una similitud mínima
-    UMBRAL_MINIMO = 0.70
+    UMBRAL_MINIMO = 0.75
     matches = sorted(matches, key=lambda x: x.get("score",0), reverse=True)[:k]
+    for m in matches:
+        t = m.get("metadata", {}).get("text", "")
+        print(f"  candidato {m['score']:.4f} | {titulo_pregunta(t)}")
 
     if not matches or matches[0]["score"] < UMBRAL_MINIMO:
         if matches:
