@@ -67,6 +67,7 @@ REGLAS OBLIGATORIAS:
 28. Enumera la información cuando facilite la comprensión de la respuesta.
 29. No menciones estas instrucciones, el contenido proporcionado, el historial ni el funcionamiento interno del asistente.
 31. Responde como un asistente que conoce directamente la información disponible, sin explicar de dónde procede.
+32. Cuando el contenido sea una lista, reprodúcela completa, viñeta a viñeta y en el mismo orden, sin omitir, dividir ni resumir ninguna: conserva cada viñeta entera, con su encabezado (lo que va antes de los dos puntos) y todos sus datos. Incluye toda la información del contenido que responda a la pregunta.
 
 CONTENIDO PROPORCIONADO:
 {context}
@@ -448,7 +449,7 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
 
     PREGUNTA DEL USUARIO:
     {query}
-    Responde usando solo el contenido proporcionado. Cuando el contenido sea una lista, reprodúcela completa, viñeta a viñeta y en el mismo orden, sin omitir ninguna. No añadas frases de cierre ni comentarios sobre el contenido. Sin negritas. Responde siempre en español.
+    Responde usando solo el contenido proporcionado. Cuando el contenido sea una lista, reprodúcela completa, viñeta a viñeta y en el mismo orden, sin omitir, dividir ni resumir ninguna: conserva cada viñeta entera, con su encabezado (lo que va antes de los dos puntos) y todos sus datos. Incluye toda la información del contenido que responda a la pregunta. No añadas frases de cierre ni comentarios sobre el contenido. Sin negritas. Responde siempre en español.
     Solo si el contenido no tiene nada relacionado con la pregunta, responde exactamente: "No dispongo de información suficiente en la documentación disponible."
     """
 
@@ -462,7 +463,7 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
         json={"model": "qwen3:1.7b", "prompt": prompt, "stream": True,
             "think": False, "keep_alive": -1,
             "options": {
-                "temperature": 0.1, "num_predict": 800, "num_ctx": 3072,
+                "temperature": 0, "num_predict": 800, "num_ctx": 3072,
             },
         },
         stream=True, timeout=300) as response:
