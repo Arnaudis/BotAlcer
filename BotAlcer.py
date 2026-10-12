@@ -99,6 +99,9 @@ def dividir_por_preguntas(paginas, splitter, max_chars=800):
                     [Document(page_content=trozo, metadata=doc.metadata)]))
     return chunks
 
+def titulo_pregunta(texto):
+    m = re.match(r"^\s*(¿[^¿]*?\?)", texto, re.S)
+    return re.sub(r"\s+", " ", m.group(1)).strip() if m else texto
 
 
 def inicializar_recursos_rag():
@@ -186,7 +189,7 @@ def inicializar_recursos_rag():
         docs = dividir_por_preguntas(raw_docs, splitter)
 
         # Genero embeddings
-        texts = [d.page_content for d in docs]
+        texts = [titulo_pregunta(d.page_content) for d in docs]
         vecs = embeddings.embed_documents(texts)
 
         # Creo vectores
@@ -422,6 +425,10 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     matches = sorted(matches, key=lambda x: x.get("score",0), reverse=True)[:k]
 
     if not matches or matches[0]["score"] < UMBRAL_MINIMO:
+        if matches:
+            texto_mejor = matches[0].get("metadata", {}).get("text", "")
+            print(f"Rechazada por umbral: {matches[0]['score']:.4f} < {UMBRAL_MINIMO} "
+                  f"| mejor pregunta: {titulo_pregunta(texto_mejor)}")
         return "No dispongo de información suficiente en la documentación disponible."
 
 
