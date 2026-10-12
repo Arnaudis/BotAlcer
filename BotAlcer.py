@@ -238,7 +238,8 @@ def unir_lineas(t):
     Une cuando la línea siguiente empieza en minúscula o dígito (continuación),
     y sin espacio si la anterior acaba en '-' o '/' (URL partidas)."""
     t = re.sub(r"(?<=[-/])\n(?=[a-záéíóúüñ0-9])", "", t)
-    return re.sub(r"\n(?=[a-záéíóúüñ0-9])(?!\d+[.)]\s)(?!o\s+[A-ZÁÉÍÓÚÑ])", " ", t)
+    t = re.sub(r"\n(?=[a-záéíóúüñ0-9])(?!\d+[.)]\s)(?!o\s+[A-ZÁÉÍÓÚÑ])", " ", t)
+    return re.sub(r"[ \t]{2,}", " ", t)
 
 
 RE_TITULO = re.compile(r"^\s*(¿[^¿]*?\?)\s*\((\d) de \d\)\s*", re.S)
