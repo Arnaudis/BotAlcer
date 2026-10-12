@@ -400,9 +400,8 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     if len(matches) > 1:
         c0 = clave_pregunta(matches[0].get("metadata", {}).get("text", ""))
         c1 = clave_pregunta(matches[1].get("metadata", {}).get("text", ""))
-        if not (hermano or cercano):
+        if not (c0 is not None and c0 == c1):
             matches = matches[:1]
-
 
     # Comprobar similitud de las preguntas
     print("\n========== BÚSQUEDA RAG ==========")
