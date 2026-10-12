@@ -416,13 +416,14 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     if not matches:
         return "No dispongo de información suficiente en la documentación disponible."
     
-    # Filtrar por similitud mínima de 0.25
-    matches = [m for m in matches if m["score"] >= 0.25]
-
-    matches = sorted(matches, key=lambda x: x.get("score",0), reverse=True)[:k]
     
-    if not matches:
+    # Ordeno los resultados y quiero una similitud mínima
+    UMBRAL_MINIMO = 0.70
+    matches = sorted(matches, key=lambda x: x.get("score",0), reverse=True)[:k]
+
+    if not matches or matches[0]["score"] < UMBRAL_MINIMO:
         return "No dispongo de información suficiente en la documentación disponible."
+
 
     if len(matches) > 1:
         c0 = clave_pregunta(matches[0].get("metadata", {}).get("text", ""))
