@@ -247,6 +247,22 @@ def clave_pregunta(texto):
     return re.sub(r"\s+", "", m.group(1)).lower() if m else None
 
 
+PALABRAS_VACIAS = {
+    "cuáles", "cuales", "cuál", "cual", "son", "es", "hay", "los", "las", "el", "la", "lo",
+    "un", "una", "unos", "unas", "de", "del", "al", "a", "en", "y", "o", "que", "qué",
+    "para", "por", "con", "se", "su", "sus", "me", "mi", "puedo", "puede", "pueden", "debo",
+    "hace", "falta", "necesito", "necesita", "necesarios", "necesaria", "requisitos",
+    "requisito", "generales", "documentación", "documentacion", "documentos", "pasos",
+    "cómo", "como", "dónde", "donde", "cuándo", "cuando", "obtener", "solicitar", "pedir",
+    "tramitar", "conseguir", "hacer", "tengo", "tener", "quiero", "saber",
+}
+
+def extraer_tema(pregunta):
+    palabras = re.findall(r"[\wáéíóúüñ]+", pregunta.lower())
+    return " ".join(p for p in palabras if p not in PALABRAS_VACIAS)
+
+
+
 def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     inicio_total = time.time()
     # Primeramente vamos a realizar unos pasos previos de normalización y filtro de las entradas del usuario.
@@ -330,17 +346,23 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
         or any(r in q_norm.split() for r in referencias)
     )
     if history and depende_del_historial:
-        historial_rag = []
+        # Buscar la última pregunta del usuario que no sea ella misma un seguimiento
+        tema = ""
+        for intercambio in reversed(history):
+            previo = intercambio.get("usuario", "").strip()
+            previo_norm = re.sub(r"[^\w\s]", "", "".join(
+                c for c in unicodedata.normalize("NFD", previo.lower())
+                if unicodedata.category(c) != "Mn"))
+            es_seguimiento = (
+                any(re.fullmatch(p, previo_norm) for p in patrones_ambiguos)
+                or any(r in previo_norm.split() for r in referencias)
+            )
+            if previo and not es_seguimiento:
+                tema = extraer_tema(previo)
+                break
+        if tema:
+            consulta_rag = f"{query} {tema}"
 
-        for intercambio in history[-1:]:
-            usuario_anterior = intercambio.get("usuario", "").strip()
-            asistente_anterior = intercambio.get("asistente", "").strip()
-
-            if usuario_anterior:
-                historial_rag.append(f"Usuario: {usuario_anterior}")
-
-        if historial_rag:
-            consulta_rag = "\n".join(historial_rag) + f"\nUsuario actual: {query}"
 
     print("\n========== CONSULTA RAG CONTEXTUALIZADA ==========")
     print(consulta_rag)
