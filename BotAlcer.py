@@ -215,9 +215,18 @@ def inicializar_recursos_rag():
 # 4. Función RAG
 # --------------
 
-# Preparo una función para unir las respuestas a las preguntas que tienen dos mitades y se recuperan en dos chunks separados.
+
+def unir_lineas(t):
+    """Une las líneas que el PDF cortó por el ancho de página.
+    Une cuando la línea siguiente empieza en minúscula o dígito (continuación),
+    y sin espacio si la anterior acaba en '-' o '/' (URL partidas)."""
+    t = re.sub(r"(?<=[-/])\n(?=[a-záéíóúüñ0-9])", "", t)
+    return re.sub(r"\n(?=[a-záéíóúüñ0-9])(?!\d+[.)]\s)(?!o\s+[A-ZÁÉÍÓÚÑ])", " ", t)
+
+
 RE_TITULO = re.compile(r"^\s*(¿[^¿]*?\?)\s*\((\d) de \d\)\s*", re.S)
 
+# Preparo una función para unir las respuestas a las preguntas que tienen dos mitades y se recuperan en dos chunks separados.
 def preparar_contexto(textos):
     """Une las mitades '(1 de 2)' / '(2 de 2)' de una misma pregunta, en orden,
     quitando la marca y el título repetido."""
@@ -238,7 +247,7 @@ def preparar_contexto(textos):
     for clave in orden:
         g = sorted(grupos[clave], key=lambda x: x[0])
         titulo = g[0][1]
-        cuerpo = "\n".join(c for _, _, c in g)
+        cuerpo = unir_lineas("\n".join(c for _, _, c in g))
         salida.append(f"{titulo}\n{cuerpo}" if titulo else cuerpo)
     return "\n\n".join(salida)
 
