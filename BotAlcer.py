@@ -13,6 +13,7 @@ import warnings
 from pinecone import Pinecone
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.documents import Document
 from langchain_ollama import OllamaEmbeddings
 import time
 # Librería para reconocer patrones en preguntas similares. Cómo se pide? o cómo pedirlo?
@@ -83,6 +84,22 @@ HISTORIAL RELEVANTE:
 # ----------------------------------
 # 3. Pinecone: vecotres y embeddings
 # ----------------------------------
+
+def dividir_por_preguntas(paginas, splitter, max_chars=800):
+    chunks = []
+    for doc in paginas:
+        for trozo in re.split(r"\n(?=¿)", doc.page_content):
+            trozo = trozo.strip()
+            if not trozo:
+                continue
+            if len(trozo) <= max_chars:
+                chunks.append(Document(page_content=trozo, metadata=doc.metadata))
+            else:
+                chunks.extend(splitter.split_documents(
+                    [Document(page_content=trozo, metadata=doc.metadata)]))
+    return chunks
+
+
 
 def inicializar_recursos_rag():
     PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
@@ -166,7 +183,7 @@ def inicializar_recursos_rag():
             chunk_size=800, chunk_overlap=100,
             separators=["\n¿", "¿", "\n\n", "\n", " ", ""]
         )
-        docs = splitter.split_documents(raw_docs)
+        docs = dividir_por_preguntas(raw_docs, splitter)
 
         # Genero embeddings
         texts = [d.page_content for d in docs]
@@ -542,5 +559,3 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     print(f"⏱ TOTAL RAG: {time.time() - inicio_total:.2f} segundos")
 
     return contenido
-
-
