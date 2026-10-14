@@ -24,20 +24,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 import requests
 import json
 #####
-# Modelo de lenguaje configurable: permite comparar LLMs sin tocar el código
-LLM_MODEL = os.getenv("LLM_MODEL", "qwen3:1.7b")
-# Solo los modelos con modo "razonamiento" (qwen3) aceptan el parámetro think
-USA_THINK = LLM_MODEL.lower().startswith("qwen3")
 
-def payload_llm(prompt, stream, num_predict):
-    p = {
-        "model": LLM_MODEL, "prompt": prompt, "stream": stream, "keep_alive": -1,
-        "options": {"temperature": 0, "num_predict": num_predict,
-                    "num_ctx": 3072, "num_thread": 8},
-    }
-    if USA_THINK:
-        p["think"] = False
-    return p
 
 
 
@@ -230,7 +217,9 @@ def inicializar_recursos_rag():
         prefijo = system_template.split("{context}")[0]   # parte fija de las reglas
         requests.post(
             f"{ollama_url}/api/generate",
-            json=payload_llm(prefijo, False, 1),
+            json={"model": "qwen3:1.7b", "prompt": prefijo, "stream": False,
+                  "think": False, "keep_alive": -1,
+                  "options": {"num_predict": 1, "num_ctx": 3072, "num_thread": 8}},
             timeout=300,
         )
     except Exception as e:
@@ -553,7 +542,12 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     data = {}
     with requests.post(
         f"{os.getenv('OLLAMA_HOST', 'http://ollama:11434')}/api/generate",
-        json=payload_llm(prompt, True, 800),
+        json={"model": "qwen3:1.7b", "prompt": prompt, "stream": True,
+            "think": False, "keep_alive": -1,
+            "options": {
+                "temperature": 0, "num_predict": 800, "num_ctx": 3072,"num_thread": 8
+            },
+        },
         stream=True, timeout=300) as response:
         response.raise_for_status()
         for linea in response.iter_lines():
