@@ -420,6 +420,7 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     if history and depende_del_historial:
         # Buscar la última pregunta del usuario que no sea ella misma un seguimiento
         tema = ""
+        pregunta_previa = ""
         for intercambio in reversed(history):
             previo = intercambio.get("usuario", "").strip()
             previo_norm = re.sub(r"[^\w\s]", "", "".join(
@@ -429,9 +430,15 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
             es_seguimiento = depende(previo_norm)
             if previo and not es_seguimiento:
                 tema = extraer_tema(previo)
+                pregunta_previa = previo
                 break
         if tema:
-            consulta_rag = f"{query} {tema}"
+            if q_norm.startswith("y "):
+                # "¿Y por invalidez?" -> "<pregunta anterior completa> por invalidez"
+                complemento = re.sub(r"^[\s¿]*[yY]\s+", "", query).strip(" ¿?")
+                consulta_rag = f"{pregunta_previa} {complemento}"
+            else:
+                consulta_rag = f"{query} {tema}"
 
 
     print("\n========== CONSULTA RAG CONTEXTUALIZADA ==========")
