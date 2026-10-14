@@ -315,6 +315,13 @@ def dato_ausente(q_norm, contexto):
 def _sin_tildes(t):
     return "".join(c for c in unicodedata.normalize("NFD", t.lower()) if unicodedata.category(c) != "Mn")
 
+
+# Sinónimos que el usuario usa y el documento no (el PDF dice "solicitar")
+SINONIMOS = {
+    "pedir": "solicitar", "pide": "solicita", "pido": "solicito", "piden": "solicitan",
+    "pedirlo": "solicitarlo", "pedirla": "solicitarla",
+    "pedirlos": "solicitarlos", "pedirlas": "solicitarlas",
+}
 # Quita el saludo para quedarme con la pregunta.
 SALUDOS = ["hola", "buenas", "buenas tardes", "buenas noches", "buenos dias", "saludos", "que tal"]
 def limpiar_entrada(texto):
@@ -328,6 +335,9 @@ def limpiar_entrada(texto):
     m = re.match(r"^\W*(quiero|quisiera|necesito|me gustaria)\s+(saber|conocer|informacion|mas informacion)\s*(sobre|acerca de)?\s*", s)
     if m and m.end() < len(t):
         t = t[m.end():].strip()
+    # Sustituir sinónimos por la palabra que usa el documento
+    t = re.sub(r"\b(" + "|".join(SINONIMOS) + r")\b",
+               lambda mo: SINONIMOS[mo.group(0).lower()], t, flags=re.I)
     return t
 
 
@@ -368,18 +378,8 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
 
     # Hay que reastrear por posibles preguntas que presenten ambigüedad solicitudes, documentación o requisitos.
     patrones_ambiguos = [
-        r"^como se pide$",
-        r"^como puedo pedirlo$",
-        r"^como se solicita$",
-        r"^como puedo solicitarlo$",
-        r"^como se consigue$",
-        r"^como puedo conseguirlo$",
-        r"^como se obtiene$",
-        r"^como puedo obtenerlo$",
-        r"^como se tramita$",
-        r"^como puedo tramitarlo$",
-        r"^como se hace$",
-        r"^como puedo hacerlo$",
+        r"^como se (pide|piden|solicita|solicitan|consigue|consiguen|obtiene|obtienen|tramita|tramitan|hace|hacen)$",
+        r"^como (puedo|se puede) (pedir|solicitar|conseguir|obtener|tramitar|hacer)(lo|la|los|las)?$",
         r"^que tengo que hacer$",
         r"^que tengo que hacer para solicitarlo$",
         r"^que tengo que hacer para pedirlo$",
@@ -657,7 +657,7 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
                 break
 
 
-       # Limpiar la salida: espacios sobrantes, negritas y eco de la pregunta al principio
+    # Limpiar la salida: espacios sobrantes, negritas y eco de la pregunta al principio
     contenido = contenido.strip().replace("**", "")
     q_eco = query.strip()
     if "?" in q_eco and contenido.lower().startswith(q_eco.lower()):
@@ -669,6 +669,10 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     # sustituir toda la respuesta por la frase estándar de "sin información"
     if re.search(r"\b(contenido proporcionado|documentación proporcionada)\b", contenido, flags=re.I) and "•" not in contenido:
         contenido = SIN_INFO
+
+    # Quitar el comentario inicial del modelo sobre el "contenido proporcionado"
+    contenido = re.sub(r"^[^.\n]*\b(contenido proporcionado|documentación proporcionada)\b[^.\n]*[.:]\s*", "", contenido, flags=re.I).strip()
+    contenido = re.sub(r"^La información (es la siguiente|que se proporciona es la siguiente)\s*[:.]?\s*", "", contenido, flags=re.I).strip()
 
     # Quitar la frase final en la que el modelo comenta el "contenido proporcionado"
     contenido = re.sub(r"\s*[^.\n]*\b(contenido proporcionado|documentación proporcionada)\b[^.\n]*\.?\s*$", "", contenido, flags=re.I).strip()
