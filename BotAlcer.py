@@ -316,6 +316,17 @@ def _sin_tildes(t):
     return "".join(c for c in unicodedata.normalize("NFD", t.lower()) if unicodedata.category(c) != "Mn")
 
 
+# Para resolver problemas a la hora de "entender" las preguntas de los usuarios.
+# Algunas del tipo "¿de qué me puedes hablar?" pueden dar complicaciones.
+PATRONES_TEMAS = [
+    r"(entonces )?de que (me )?(puedes|puede) hablar( conmigo)?",
+    r"(entonces )?(sobre )?que temas (puedes |puede )?(hablar|tratar|informar|hablas|tratas|conoces|dominas)",
+    r"(entonces )?que (me )?(puedes|puede) (informar|decir|contar|hacer)",
+    r"(entonces )?en que (me )?(puedes|puede) ayudar",
+    r"(entonces )?(que sabes( hacer)?|para que sirves|que haces)",
+]
+TITULO_TEMAS = "¿De qué temas puede hablar BotAlcer y en qué me puede ayudar?"
+
 # Sinónimos que el usuario usa y el documento no (el PDF dice "solicitar")
 SINONIMOS = {
     "pedir": "solicitar", "pide": "solicita", "pido": "solicito", "piden": "solicitan",
@@ -478,6 +489,10 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
             else:
                 consulta_rag = f"{pregunta_previa} {query}"
 
+    # Preguntas del tipo "¿de qué me puedes hablar?": ir directamente al fragmento de temas
+    if any(re.fullmatch(p, q_norm_sin_tildes) for p in PATRONES_TEMAS):
+        consulta_rag = TITULO_TEMAS
+
 
     print("\n========== CONSULTA RAG CONTEXTUALIZADA ==========")
     print(consulta_rag)
@@ -596,10 +611,11 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     #Los contactos de Avericum se devuelven como están, sin gastar tiempo en el modelo. Es porque repite dos veces la información
     #con el prompt existente.
     titulo_mejor = titulo_pregunta(matches[0].get("metadata", {}).get("text", ""))
-    if len(matches) == 1 and re.search(r"dirección y cómo se puede contactar", titulo_mejor):
-        print("Respuesta directa: ficha de contacto (sin LLM)")
+    if len(matches) == 1 and re.search(r"dirección y cómo se puede contactar|de qué temas puede hablar BotAlcer", titulo_mejor):
+        print("Respuesta directa: ficha de contacto o de temas (sin LLM)")
         print(f"⏱ TOTAL RAG: {time.time() - inicio_total:.2f} segundos")
-        return context.split("\n", 1)[1].strip() if "\n" in context else context
+        cuerpo = context.split("\n", 1)[1].strip() if "\n" in context else context
+        return cuerpo.replace("\n", "  \n")
     
     # Pasamos a gestionar el historial.
     history_text = "Sin historial anterior"
