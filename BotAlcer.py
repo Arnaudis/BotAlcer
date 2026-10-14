@@ -328,7 +328,11 @@ def cubre_titulo(q_norm, titulo):
     claves = palabras_clave(q_norm)
     return len(claves) >= 2 and claves <= palabras_clave(titulo)
 
-
+def cobertura(consulta, titulo):
+    """Fracción de las palabras de la consulta que aparecen en el título de la pregunta."""
+    qt = set(re.sub(r"[^\w\s]", " ", _sin_tildes(consulta)).split())
+    tt = set(re.sub(r"[^\w\s]", " ", _sin_tildes(titulo)).split())
+    return len(qt & tt) / len(qt) if qt else 0.0
 
 
 def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
@@ -484,7 +488,8 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     
     # Ordeno los resultados y quiero una similitud mínima
     UMBRAL_MINIMO = 0.75
-    matches = sorted(matches, key=lambda x: x.get("score",0), reverse=True)[:k]
+    matches = sorted(matches, key=lambda m: m.get("score", 0) + 0.1 * cobertura(consulta_rag, titulo_pregunta(m.get("metadata", {}).get("text", ""))),
+        reverse=True,)[:k]
     for m in matches:
         t = m.get("metadata", {}).get("text", "")
         print(f"  candidato {m['score']:.4f} | {titulo_pregunta(t)}")
@@ -642,6 +647,12 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     
     # Quitar la frase final en la que el modelo comenta el "contenido proporcionado"
     contenido = re.sub(r"\s*[^.\n]*\b(contenido proporcionado|documentación proporcionada)\b[^.\n]*\.?\s*$", "", contenido, flags=re.I).strip()
+
+    # Quitar el "No dispongo..." añadido detrás de una respuesta que sí tiene contenido
+    SIN_INFO = "No dispongo de información suficiente en la documentación disponible."
+    if contenido != SIN_INFO and contenido.endswith(SIN_INFO):
+        contenido = contenido[:-len(SIN_INFO)].strip()
+
 
 
     print("\n========== MÉTRICAS OLLAMA ==========")
