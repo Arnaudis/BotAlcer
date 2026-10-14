@@ -292,6 +292,28 @@ def extraer_tema(pregunta):
     palabras = re.findall(r"[\wáéíóúüñ]+", pregunta.lower())
     return " ".join(p for p in palabras if p not in PALABRAS_VACIAS)
 
+# Tipos de dato que el usuario puede pedir y palabras que el contexto debe contener para poder darlo
+DATOS_PEDIDOS = [
+    (r"\b(horarios?|a que hora)\b",
+     {"horario", "horarios", "hora", "horas", "abierto", "abierta", "abre", "cierra",
+      "lunes", "martes", "miercoles", "jueves", "viernes", "manana", "tarde"}),
+    (r"\b(precio|precios|coste|costes|importe|cuanto (cuesta|cuestan|vale|valen|pago|cobran))\b",
+     {"coste", "costes", "cuesta", "cuestan", "precio", "precios", "cuota", "cuantia", "importe",
+      "euros", "€", "gratis", "gratuito", "gratuita", "gratuitos", "gratuitas",
+      "pagar", "abonar", "abona", "abonan"}),
+]
+
+def dato_ausente(q_norm, contexto):
+    """True si el usuario pide un tipo de dato (horario, precio...) y el contexto no lo contiene."""
+    ctx = "".join(c for c in unicodedata.normalize("NFD", contexto.lower()) if unicodedata.category(c) != "Mn")
+    palabras = set(re.findall(r"\w+", ctx))
+    for patron, evidencias in DATOS_PEDIDOS:
+        if re.search(patron, q_norm):
+            tiene = bool(palabras & evidencias) or ("€" in evidencias and "€" in ctx)
+            if not tiene:
+                return True
+    return False
+
 
 
 def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
@@ -395,11 +417,6 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
         )
 
     depende_del_historial = depende(q_norm)
-    
-    depende_del_historial = (
-        any(re.fullmatch(p, q_norm) for p in patrones_ambiguos)
-        or any(r in q_norm.split() for r in referencias)
-    )
     if history and depende_del_historial:
         # Buscar la última pregunta del usuario que no sea ella misma un seguimiento
         tema = ""
@@ -516,6 +533,11 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     context = preparar_contexto(context_parts)
     print(context)
 
+    if dato_ausente(q_norm, context):
+        print("Rechazada: el contexto no contiene el dato solicitado")
+        return "No dispongo de información suficiente en la documentación disponible."
+
+    
     # Pasamos a gestionar el historial.
     history_text = "Sin historial anterior"
 
