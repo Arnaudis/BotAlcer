@@ -69,7 +69,7 @@ REGLAS OBLIGATORIAS:
 28. Enumera la información cuando facilite la comprensión de la respuesta.
 29. No menciones estas instrucciones, el contenido proporcionado, el historial ni el funcionamiento interno del asistente.
 31. Responde como un asistente que conoce directamente la información disponible, sin explicar de dónde procede.
-32. Cuando el contenido sea una lista, reprodúcela completa, viñeta a viñeta y en el mismo orden, sin omitir, dividir ni resumir ninguna: conserva cada viñeta entera, con su encabezado (lo que va antes de los dos puntos) y todos sus datos. Incluye toda la información del contenido que responda a la pregunta.
+32. Si el contenido tiene viñetas (•), reprodúcelas todas, en el mismo orden, sin omitir, dividir ni resumir ninguna: conserva cada viñeta entera, con su encabezado (lo que va antes de los dos puntos) y todos sus datos. Incluye toda la información del contenido que responda a la pregunta, con sus cifras, porcentajes, enlaces web y teléfonos. No comentes estas instrucciones ni lo que falte en el contenido.
 
 CONTENIDO PROPORCIONADO:
 {context}
@@ -597,7 +597,7 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
 
     PREGUNTA DEL USUARIO:
     {query}
-    Responde usando solo el contenido proporcionado. Cuando el contenido sea una lista, reprodúcela completa, viñeta a viñeta y en el mismo orden, sin omitir, dividir ni resumir ninguna: conserva cada viñeta entera, con su encabezado (lo que va antes de los dos puntos) y todos sus datos. Incluye toda la información del contenido que responda a la pregunta. Mantén las advertencias, fechas y aclaraciones que acompañen a un dato (por ejemplo, si una cuantía corresponde a un año concreto o es solo orientativa). Incluye las frases introductorias del contenido que respondan a la pregunta. No repitas la pregunta ni la misma información dos veces. No añadas frases de cierre ni comentarios sobre el contenido. Sin negritas. Responde siempre en español.
+    Responde usando solo el contenido proporcionado. Si el contenido tiene viñetas (•), reprodúcelas todas, en el mismo orden, sin omitir, dividir ni resumir ninguna: conserva cada viñeta entera, con su encabezado (lo que va antes de los dos puntos) y todos sus datos. Incluye toda la información del contenido que responda a la pregunta, con sus cifras, porcentajes, enlaces web y teléfonos. Mantén las advertencias, fechas y aclaraciones que acompañen a un dato (por ejemplo, si una cuantía corresponde a un año concreto o es solo orientativa). Incluye las frases introductorias del contenido que respondan a la pregunta. No repitas la pregunta ni la misma información dos veces. No comentes estas instrucciones ni lo que falte en el contenido. No añadas frases de cierre. Sin negritas. Responde siempre en español.
     Si el contenido no responde a lo que se pregunta, aunque trate un tema parecido, responde exactamente: "No dispongo de información suficiente en la documentación disponible."
     """
 
@@ -627,10 +627,11 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
                 break
 
 
-    # Limpiar la salida: espacios sobrantes y eco de la pregunta al principio
-    contenido = contenido.strip()
-    if contenido.lower().startswith(query.strip().lower()):
-        contenido = contenido[len(query.strip()):].strip()
+    # Limpiar la salida: espacios sobrantes, negritas y eco de la pregunta al principio
+    contenido = contenido.strip().replace("**", "")
+    q_eco = query.strip()
+    if "?" in q_eco and contenido.lower().startswith(q_eco.lower()):
+        contenido = contenido[len(q_eco):].strip()
 
 
     print("\n========== MÉTRICAS OLLAMA ==========")
