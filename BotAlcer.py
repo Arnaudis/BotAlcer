@@ -597,17 +597,8 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
 
     PREGUNTA DEL USUARIO:
     {query}
-    Responde usando solo el contenido proporcionado. Cuando el contenido sea una lista, reprodúcela completa, viñeta a viñeta y en el mismo orden, sin omitir, 
-    dividir ni resumir ninguna: conserva cada viñeta entera, con su encabezado (lo que va antes de los dos puntos) y todos sus datos. Incluye toda la información 
-    del contenido que responda a la pregunta. No añadas frases de cierre ni comentarios sobre el contenido. Sin negritas. Responde siempre en español.
-    Si el contenido no responde a lo que se pregunta, aunque trate un tema parecido. Responde usando solo el contenido proporcionado. Cuando el contenido sea una 
-    lista, reprodúcela completa, viñeta a viñeta y en el mismo orden, sin omitir, dividir ni resumir ninguna: conserva cada viñeta entera, con su encabezado (lo 
-    que va antes de los dos puntos) y todos sus datos. Incluye toda la información del contenido que responda a la pregunta. Mantén las advertencias, fechas y 
-    aclaraciones que acompañen a un dato (por ejemplo, si una cuantía corresponde a un año concreto o es solo orientativa). Incluye las frases introductorias del 
-    contenido que respondan a la pregunta. No repitas la pregunta ni la misma información dos veces. No añadas frases de cierre ni comentarios sobre el contenido. 
-    Sin negritas. Responde siempre en español.
-    Si el contenido no responde a lo que se pregunta, aunque trate un tema parecido, responde exactamente: "No dispongo de información suficiente en la 
-    documentación disponible."
+    Responde usando solo el contenido proporcionado. Cuando el contenido sea una lista, reprodúcela completa, viñeta a viñeta y en el mismo orden, sin omitir, dividir ni resumir ninguna: conserva cada viñeta entera, con su encabezado (lo que va antes de los dos puntos) y todos sus datos. Incluye toda la información del contenido que responda a la pregunta. Mantén las advertencias, fechas y aclaraciones que acompañen a un dato (por ejemplo, si una cuantía corresponde a un año concreto o es solo orientativa). Incluye las frases introductorias del contenido que respondan a la pregunta. No repitas la pregunta ni la misma información dos veces. No añadas frases de cierre ni comentarios sobre el contenido. Sin negritas. Responde siempre en español.
+    Si el contenido no responde a lo que se pregunta, aunque trate un tema parecido, responde exactamente: "No dispongo de información suficiente en la documentación disponible."
     """
 
     # Respuesta del modelo tras invocarlo

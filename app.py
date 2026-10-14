@@ -714,6 +714,7 @@ if st.session_state.contacto_estado == "finalizado" and not st.session_state.con
             "BotAlcer se despide",
             "¡De nada!",
         )
+
         if not answer.startswith(RESPUESTAS_SIN_CONTENIDO):
             st.session_state.historial_conversacion.append({"usuario": query, "asistente": answer})
             
