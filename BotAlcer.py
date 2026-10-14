@@ -314,6 +314,21 @@ def dato_ausente(q_norm, contexto):
                 return True
     return False
 
+def _sin_tildes(t):
+    return "".join(c for c in unicodedata.normalize("NFD", t.lower()) if unicodedata.category(c) != "Mn")
+
+VACIAS_NORM = {_sin_tildes(p) for p in PALABRAS_VACIAS}
+
+def palabras_clave(t):
+    t = re.sub(r"[^\w\s]", " ", _sin_tildes(t))
+    return {p for p in t.split() if len(p) > 2 and p not in VACIAS_NORM}
+
+def cubre_titulo(q_norm, titulo):
+    """True si la consulta tiene >= 2 palabras clave y todas están en el título de la pregunta."""
+    claves = palabras_clave(q_norm)
+    return len(claves) >= 2 and claves <= palabras_clave(titulo)
+
+
 
 
 def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
@@ -392,11 +407,12 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
         respuesta = "¡De nada! Estoy siempre a disposición para cualquier duda que tengas sobre la Enfermedad Renal Crónica o la asociación ALCER."
         return respuesta
 
-    # Consejo médico (qué tomar, dosis...): no corresponde a este asistente
+    # Consejo médico es para pregunta sobre qué tomar, dosis, etc.
     consejo_medico = (
         re.search(r"\b(que|cual)\b.*\b(medicacion|medicamento|medicamentos|pastilla|pastillas|farmaco|farmacos)\b.*\b(tomar|recomiendas|recomienda)\b", q_norm)
         or re.search(r"\b(dosis|cuanto)\b.*\b(tomar|medicacion|medicamento)\b", q_norm)
         or re.search(r"\bque\b.*\b(tomar|tomo)\b.*\b(tension|dolor|fiebre|azucar|colesterol)\b", q_norm)
+        or re.search(r"\bcuant[oa]s?\b.*\b(tomar|tomo)\b", q_norm)
     )
     if consejo_medico:
         return "No puedo ofrecer recomendaciones médicas. Consulta con tu médico o nefrólogo."
@@ -473,13 +489,23 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
         t = m.get("metadata", {}).get("text", "")
         print(f"  candidato {m['score']:.4f} | {titulo_pregunta(t)}")
 
-    if not matches or matches[0]["score"] < UMBRAL_MINIMO:
+    # Rescate: consulta corta ("avericum telde") cuyas palabras clave están todas en el título de la mejor pregunta
+    UMBRAL_RESCATE = 0.60
+    rescatada = (
+        bool(matches)
+        and UMBRAL_RESCATE <= matches[0]["score"] < UMBRAL_MINIMO
+        and cubre_titulo(q_norm, titulo_pregunta(matches[0].get("metadata", {}).get("text", "")))
+    )
+    if rescatada:
+        print(f"Aceptada por coincidencia de palabras clave: {matches[0]['score']:.4f}")
+
+    if not matches or (matches[0]["score"] < UMBRAL_MINIMO and not rescatada):
         if matches:
             texto_mejor = matches[0].get("metadata", {}).get("text", "")
             print(f"Rechazada por umbral: {matches[0]['score']:.4f} < {UMBRAL_MINIMO} "
                   f"| mejor pregunta: {titulo_pregunta(texto_mejor)}")
         return "No dispongo de información suficiente en la documentación disponible."
-
+    
 
     if len(matches) > 1:
         c0 = clave_pregunta(matches[0].get("metadata", {}).get("text", ""))
@@ -571,8 +597,17 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
 
     PREGUNTA DEL USUARIO:
     {query}
-    Responde usando solo el contenido proporcionado. Cuando el contenido sea una lista, reprodúcela completa, viñeta a viñeta y en el mismo orden, sin omitir, dividir ni resumir ninguna: conserva cada viñeta entera, con su encabezado (lo que va antes de los dos puntos) y todos sus datos. Incluye toda la información del contenido que responda a la pregunta. No añadas frases de cierre ni comentarios sobre el contenido. Sin negritas. Responde siempre en español.
-    Si el contenido no responde a lo que se pregunta, aunque trate un tema parecido, responde exactamente: "No dispongo de información suficiente en la documentación disponible."
+    Responde usando solo el contenido proporcionado. Cuando el contenido sea una lista, reprodúcela completa, viñeta a viñeta y en el mismo orden, sin omitir, 
+    dividir ni resumir ninguna: conserva cada viñeta entera, con su encabezado (lo que va antes de los dos puntos) y todos sus datos. Incluye toda la información 
+    del contenido que responda a la pregunta. No añadas frases de cierre ni comentarios sobre el contenido. Sin negritas. Responde siempre en español.
+    Si el contenido no responde a lo que se pregunta, aunque trate un tema parecido. Responde usando solo el contenido proporcionado. Cuando el contenido sea una 
+    lista, reprodúcela completa, viñeta a viñeta y en el mismo orden, sin omitir, dividir ni resumir ninguna: conserva cada viñeta entera, con su encabezado (lo 
+    que va antes de los dos puntos) y todos sus datos. Incluye toda la información del contenido que responda a la pregunta. Mantén las advertencias, fechas y 
+    aclaraciones que acompañen a un dato (por ejemplo, si una cuantía corresponde a un año concreto o es solo orientativa). Incluye las frases introductorias del 
+    contenido que respondan a la pregunta. No repitas la pregunta ni la misma información dos veces. No añadas frases de cierre ni comentarios sobre el contenido. 
+    Sin negritas. Responde siempre en español.
+    Si el contenido no responde a lo que se pregunta, aunque trate un tema parecido, responde exactamente: "No dispongo de información suficiente en la 
+    documentación disponible."
     """
 
     # Respuesta del modelo tras invocarlo
@@ -599,6 +634,12 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
                 on_token(contenido)
             if data.get("done"):
                 break
+
+
+    # Limpiar la salida: espacios sobrantes y eco de la pregunta al principio
+    contenido = contenido.strip()
+    if contenido.lower().startswith(query.strip().lower()):
+        contenido = contenido[len(query.strip()):].strip()
 
 
     print("\n========== MÉTRICAS OLLAMA ==========")
