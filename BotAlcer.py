@@ -677,6 +677,15 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     # Quitar la frase final en la que el modelo comenta el "contenido proporcionado"
     contenido = re.sub(r"\s*[^.\n]*\b(contenido proporcionado|documentación proporcionada)\b[^.\n]*\.?\s*$", "", contenido, flags=re.I).strip()
 
+    # Como el modelo Qwen3:1.7b añade, a veces info, pq ignora la orden "no comentes lo que falte".
+    # Hay que eliminar las líneas donde el modelo va a sur aire y comenta lo que NO contiene el texto
+    if contenido != SIN_INFO:
+        META = re.compile(r"(contenido (disponible|proporcionado)|documentaci[oó]n (disponible|proporcionada)"
+                          r"|no se (proporcionan?|mencionan?|incluyen?|especifican?|indica)"
+                          r"|el contenido no|sin mencionar)", re.I)
+        lineas = [l for l in contenido.split("\n") if not META.search(l)]
+        contenido = "\n".join(lineas).strip() or SIN_INFO
+
     # Quitar el "No dispongo..." añadido detrás de una respuesta que sí tiene contenido
     if contenido != SIN_INFO and contenido.endswith(SIN_INFO):
         contenido = contenido[:-len(SIN_INFO)].strip()
