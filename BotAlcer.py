@@ -347,8 +347,11 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
         if unicodedata.category(c) != "Mn"
     )
 
+    
+    es_seguimiento_corto = q_norm_sin_tildes.startswith("y ") and len(q_norm_sin_tildes.split()) <= 5
+    
     # Comprobar si existe un tema claramente identificado en la conversación anterior.
-    if any(re.fullmatch(patron, q_norm_sin_tildes) for patron in patrones_ambiguos):
+    if any(re.fullmatch(patron, q_norm_sin_tildes) for patron in patrones_ambiguos) or es_seguimiento_corto:
         # Si no existe historial, no podemos saber a qué trámite o servicio se refiere.
         if not history:
             respuesta = "¿Qué trámite, prestación, ayuda o servicio quieres consultar?"
@@ -383,6 +386,16 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
 
     # Y si hacemos preguntas con referencia a pregunta anterior...
     referencias = ["lo", "eso", "esa", "ese", "esto", "aquello"]
+
+    def depende(qn):
+        return (
+            any(re.fullmatch(p, qn) for p in patrones_ambiguos)
+            or any(r in qn.split() for r in referencias)
+            or (qn.startswith("y ") and len(qn.split()) <= 5)   # "¿Y por invalidez?", "¿Y en Lanzarote?"
+        )
+
+    depende_del_historial = depende(q_norm)
+    
     depende_del_historial = (
         any(re.fullmatch(p, q_norm) for p in patrones_ambiguos)
         or any(r in q_norm.split() for r in referencias)
@@ -395,10 +408,8 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
             previo_norm = re.sub(r"[^\w\s]", "", "".join(
                 c for c in unicodedata.normalize("NFD", previo.lower())
                 if unicodedata.category(c) != "Mn"))
-            es_seguimiento = (
-                any(re.fullmatch(p, previo_norm) for p in patrones_ambiguos)
-                or any(r in previo_norm.split() for r in referencias)
-            )
+
+            es_seguimiento = depende(previo_norm)
             if previo and not es_seguimiento:
                 tema = extraer_tema(previo)
                 break
