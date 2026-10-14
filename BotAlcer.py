@@ -354,6 +354,12 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
             query = re.sub(r"^\s*" + re.escape(saludo) + r"[\s,.;:!¡]*", "", query, flags=re.I).strip() or query
             break
 
+    # Quitar fórmulas de arranque: "quiero información sobre la cuota" -> "la cuota"
+    m_mul = re.match(r"^\W*(quiero|quisiera|necesito|me gustaria)\s+(saber|conocer|informacion|mas informacion)\s*(sobre|acerca de)?\s*", _sin_tildes(query))
+    if m_mul and m_mul.end() < len(query):
+        query = query[m_mul.end():].strip()
+        q_norm = re.sub(r"[^\w\s]", "", _sin_tildes(query.strip()))
+        
 
     # Hay que reastrear por posibles preguntas que presenten ambigüedad solicitudes, documentación o requisitos.
     patrones_ambiguos = [
