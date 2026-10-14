@@ -657,17 +657,23 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
                 break
 
 
-    # Limpiar la salida: espacios sobrantes, negritas y eco de la pregunta al principio
+       # Limpiar la salida: espacios sobrantes, negritas y eco de la pregunta al principio
     contenido = contenido.strip().replace("**", "")
     q_eco = query.strip()
     if "?" in q_eco and contenido.lower().startswith(q_eco.lower()):
         contenido = contenido[len(q_eco):].strip()
-    
+
+    SIN_INFO = "No dispongo de información suficiente en la documentación disponible."
+
+    # Si el modelo solo comenta que el contenido no cubre la pregunta (sin viñetas),
+    # sustituir toda la respuesta por la frase estándar de "sin información"
+    if re.search(r"\b(contenido proporcionado|documentación proporcionada)\b", contenido, flags=re.I) and "•" not in contenido:
+        contenido = SIN_INFO
+
     # Quitar la frase final en la que el modelo comenta el "contenido proporcionado"
     contenido = re.sub(r"\s*[^.\n]*\b(contenido proporcionado|documentación proporcionada)\b[^.\n]*\.?\s*$", "", contenido, flags=re.I).strip()
 
     # Quitar el "No dispongo..." añadido detrás de una respuesta que sí tiene contenido
-    SIN_INFO = "No dispongo de información suficiente en la documentación disponible."
     if contenido != SIN_INFO and contenido.endswith(SIN_INFO):
         contenido = contenido[:-len(SIN_INFO)].strip()
 
