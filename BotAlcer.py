@@ -570,6 +570,13 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
         print("Rechazada: el contexto no contiene el dato solicitado")
         return "No dispongo de información suficiente en la documentación disponible."
 
+    #Los contactos de Avericum se devuelven como están, sin gastar tiempo en el modelo. Es porque repite dos veces la información
+    #con el prompt existente.
+    titulo_mejor = titulo_pregunta(matches[0].get("metadata", {}).get("text", ""))
+    if len(matches) == 1 and re.search(r"dirección y cómo se puede contactar", titulo_mejor):
+        print("Respuesta directa: ficha de contacto (sin LLM)")
+        print(f"⏱ TOTAL RAG: {time.time() - inicio_total:.2f} segundos")
+        return context.split("\n", 1)[1].strip() if "\n" in context else context
     
     # Pasamos a gestionar el historial.
     history_text = "Sin historial anterior"
@@ -632,6 +639,9 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     q_eco = query.strip()
     if "?" in q_eco and contenido.lower().startswith(q_eco.lower()):
         contenido = contenido[len(q_eco):].strip()
+    
+    # Quitar la frase final en la que el modelo comenta el "contenido proporcionado"
+    contenido = re.sub(r"\s*[^.\n]*\b(contenido proporcionado|documentación proporcionada)\b[^.\n]*\.?\s*$", "", contenido, flags=re.I).strip()
 
 
     print("\n========== MÉTRICAS OLLAMA ==========")
