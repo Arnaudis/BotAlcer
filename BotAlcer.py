@@ -347,6 +347,13 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
         respuesta = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER. ¿En qué te puedo ayudar hoy?"
         return respuesta
 
+    # Para preguntas con saludos, eliminarlos para que llegue solo lo necesario a buscar
+    for saludo in sorted(saludos, key=len, reverse=True):
+        if q_norm.startswith(saludo + " "):
+            q_norm = q_norm[len(saludo):].strip()
+            query = re.sub(r"^\s*" + re.escape(saludo) + r"[\s,.;:!¡]*", "", query, flags=re.I).strip() or query
+            break
+
 
     # Hay que reastrear por posibles preguntas que presenten ambigüedad solicitudes, documentación o requisitos.
     patrones_ambiguos = [
