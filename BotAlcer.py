@@ -279,13 +279,11 @@ def clave_pregunta(texto):
 
 
 PALABRAS_VACIAS = {
-    "cuáles", "cuales", "cuál", "cual", "son", "es", "hay", "los", "las", "el", "la", "lo",
-    "un", "una", "unos", "unas", "de", "del", "al", "a", "en", "y", "o", "que", "qué",
-    "para", "por", "con", "se", "su", "sus", "me", "mi", "puedo", "puede", "pueden", "debo",
-    "hace", "falta", "necesito", "necesita", "necesarios", "necesaria", "requisitos",
-    "requisito", "generales", "documentación", "documentacion", "documentos", "pasos",
-    "cómo", "como", "dónde", "donde", "cuándo", "cuando", "obtener", "solicitar", "pedir",
-    "tramitar", "conseguir", "hacer", "tengo", "tener", "quiero", "saber",
+    "cuáles", "cuales", "cuál", "cual", "son", "es", "hay", "los", "las", "el", "la", "lo","un", "una", "unos", "unas", "de", "del", "al", 
+    "a", "en", "y", "o", "que", "qué", "para", "por", "con", "se", "su", "sus", "me", "mi", "puedo", "puede", "pueden", "debo", "hace", "falta", 
+    "necesito", "necesita", "necesarios", "necesaria", "requisitos", "requisito", "generales", "documentación", "documentacion", "documentos", 
+    "pasos", "cómo", "como", "dónde", "donde", "cuándo", "cuando", "obtener", "solicitar", "pedir", "tramitar", "conseguir", "hacer", "tengo", 
+    "tener", "quiero", "saber", "hola", "información", "informacion", "sobre",
 }
 
 def extraer_tema(pregunta):
@@ -317,6 +315,22 @@ def dato_ausente(q_norm, contexto):
 def _sin_tildes(t):
     return "".join(c for c in unicodedata.normalize("NFD", t.lower()) if unicodedata.category(c) != "Mn")
 
+# Quita el saludo para quedarme con la pregunta.
+SALUDOS = ["hola", "buenas", "buenas tardes", "buenas noches", "buenos dias", "saludos", "que tal"]
+def limpiar_entrada(texto):
+    t = texto.strip()
+    s = _sin_tildes(t)
+    for saludo in sorted(SALUDOS, key=len, reverse=True):
+        m = re.match(r"^\W*" + re.escape(saludo) + r"\b[\s,.;:!¡]*", s)
+        if m and m.end() < len(t):
+            t, s = t[m.end():].strip(), s[m.end():]
+            break
+    m = re.match(r"^\W*(quiero|quisiera|necesito|me gustaria)\s+(saber|conocer|informacion|mas informacion)\s*(sobre|acerca de)?\s*", s)
+    if m and m.end() < len(t):
+        t = t[m.end():].strip()
+    return t
+
+
 VACIAS_NORM = {_sin_tildes(p) for p in PALABRAS_VACIAS}
 
 def palabras_clave(t):
@@ -347,19 +361,10 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
         respuesta = "¡Hola! Soy BotAlcer, tu asistente sobre la Enfermedad Renal Crónica (ERC) de ALCER. ¿En qué te puedo ayudar hoy?"
         return respuesta
 
-    # Para preguntas con saludos, eliminarlos para que llegue solo lo necesario a buscar
-    for saludo in sorted(saludos, key=len, reverse=True):
-        if q_norm.startswith(saludo + " "):
-            q_norm = q_norm[len(saludo):].strip()
-            query = re.sub(r"^\s*" + re.escape(saludo) + r"[\s,.;:!¡]*", "", query, flags=re.I).strip() or query
-            break
+    # Quitar saludo y sacar lo importante: "hola, quiero información sobre la cuota" -> "la cuota"
+    query = limpiar_entrada(query)
+    q_norm = re.sub(r"[^\w\s]", "", _sin_tildes(query.strip()))
 
-    # Quitar fórmulas de arranque: "quiero información sobre la cuota" -> "la cuota"
-    m_mul = re.match(r"^\W*(quiero|quisiera|necesito|me gustaria)\s+(saber|conocer|informacion|mas informacion)\s*(sobre|acerca de)?\s*", _sin_tildes(query))
-    if m_mul and m_mul.end() < len(query):
-        query = query[m_mul.end():].strip()
-        q_norm = re.sub(r"[^\w\s]", "", _sin_tildes(query.strip()))
-        
 
     # Hay que reastrear por posibles preguntas que presenten ambigüedad solicitudes, documentación o requisitos.
     patrones_ambiguos = [
@@ -455,7 +460,7 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
         tema = ""
         pregunta_previa = ""
         for intercambio in reversed(history):
-            previo = intercambio.get("usuario", "").strip()
+            previo = limpiar_entrada(intercambio.get("usuario", "").strip())
             previo_norm = re.sub(r"[^\w\s]", "", "".join(
                 c for c in unicodedata.normalize("NFD", previo.lower())
                 if unicodedata.category(c) != "Mn"))
