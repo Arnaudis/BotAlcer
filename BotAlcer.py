@@ -476,7 +476,7 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
                 complemento = re.sub(r"^[\s¿]*[yY]\s+", "", query).strip(" ¿?")
                 consulta_rag = f"{pregunta_previa} {complemento}"
             else:
-                consulta_rag = f"{query} {tema}"
+                consulta_rag = f"{pregunta_previa} {query}"
 
 
     print("\n========== CONSULTA RAG CONTEXTUALIZADA ==========")
