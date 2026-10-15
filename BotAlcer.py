@@ -362,8 +362,16 @@ def limpiar_entrada(texto):
 
 VACIAS_NORM = {_sin_tildes(p) for p in PALABRAS_VACIAS}
 
+# Queremos ver si hacen preguntas genéricas sobre temas. Entonces, obtenemos la palabra claves.
+# Pero está el detalle de los plurales. Y aquí, hay palabras con plural en -s o en -es.
 def _raiz(p):
-    return p[:-1] if len(p) > 3 and p.endswith("s") else p
+    if len(p) > 4 and p.endswith("es"):
+        p = p[:-2]            # enfermedades -> enfermedad, pensiones -> pension, renales -> renal
+    elif len(p) > 3 and p.endswith("s"):
+        p = p[:-1]            # diálisis -> dialisi, servicios -> servicio
+    if len(p) > 4 and p.endswith("e"):
+        p = p[:-1]            # donante / donantes -> donant
+    return p
 
 def palabras_clave(t):
     t = re.sub(r"[^\w\s]", " ", _sin_tildes(t))
@@ -458,6 +466,10 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
              r"|(podemos|puedo|puedes) (hablar|preguntar|consultar)( algo| contigo| contigo algo)?)")
     if re.fullmatch(SIMPLES, q_norm):
         return "Por supuesto. ¿Sobre qué te gustaría hablar o qué quieres consultar?"
+
+     # Y si hay confirmaciones que da el usuario, sin más, hay que preguntar porque tema concreto se refiere.
+    if re.fullmatch(r"(si|vale|ok|claro|adelante|de acuerdo|si por favor|por favor)", q_norm):
+        return "Escribe el tema o la pregunta que te interese (por ejemplo, copiando una de las opciones) y te respondo."
 
     # Consejo médico es para pregunta sobre qué tomar, dosis, etc.
     consejo_medico = (
@@ -556,28 +568,28 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     if rescatada:
         print(f"Aceptada por coincidencia de palabras clave: {matches[0]['score']:.4f}")
 
-    # Supuesto de que el usuario pide un tema general con una sola palabra ("los riñones"). Hay que ofrecer opciones según el título.
+    # Supuesto de que el usuario pide un tema general con una sola palabra ("los riñones"). Hay que ofrecer opciones según el título. 
+    # Pero hay que tener en cuenta y comprobar que la palabra suelta que se obtenga no sea un tema.
     claves = palabras_clave(q_norm)
-    if len(claves) == 1 and not depende_del_historial and matches:
+    if len(claves) == 1 and not depende_del_historial and matches and consulta_rag != TITULO_TEMAS:
+        amplios = index.query(vector=qvec, top_k=20, include_metadata=True, namespace="botalcer-v1").get("matches", [])
         titulos = list(dict.fromkeys(
-            titulo_pregunta(m.get("metadata", {}).get("text", "")) for m in matches
-            if m["score"] >= UMBRAL_RESCATE
+            titulo_pregunta(m.get("metadata", {}).get("text", "")) for m in amplios
+            if m["score"] >= 0.50
             and claves <= palabras_clave(titulo_pregunta(m.get("metadata", {}).get("text", "")))))
         if len(titulos) >= 2:
-            return "Tengo información sobre ese tema. ¿Qué te gustaría saber?  \n" + "  \n".join(f"• {t}" for t in titulos)
+            return "Tengo información sobre ese tema. ¿Qué te gustaría saber?  \n" + "  \n".join(f"• {t}" for t in titulos[:8])
+        if (len(titulos) == 1 and matches[0]["score"] >= UMBRAL_RESCATE
+                and titulo_pregunta(matches[0].get("metadata", {}).get("text", "")) == titulos[0]):
+            rescatada = True
+            print("Aceptada: único título que contiene el tema")
+
 
     if not matches or (matches[0]["score"] < UMBRAL_MINIMO and not rescatada):
         if matches:
             texto_mejor = matches[0].get("metadata", {}).get("text", "")
             print(f"Rechazada por umbral: {matches[0]['score']:.4f} < {UMBRAL_MINIMO} "
                   f"| mejor pregunta: {titulo_pregunta(texto_mejor)}")
-            # Tema general de una sola palabra ("riñones"): ofrecer los títulos que encajan
-            claves = palabras_clave(q_norm)
-            sugeridas = [titulo_pregunta(m.get("metadata", {}).get("text", "")) for m in matches
-                         if m["score"] >= UMBRAL_RESCATE
-                         and claves <= palabras_clave(titulo_pregunta(m.get("metadata", {}).get("text", "")))]
-            if len(claves) == 1 and sugeridas:
-                return "Tengo información sobre ese tema. ¿Qué te gustaría saber?  \n" + "  \n".join(f"• {t}" for t in sugeridas)
         return "No dispongo de información suficiente en la documentación disponible."
     
 
