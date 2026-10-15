@@ -317,13 +317,14 @@ def _sin_tildes(t):
 
 
 # Para resolver problemas a la hora de "entender" las preguntas de los usuarios.
-# Algunas del tipo "¿de qué me puedes hablar?" pueden dar complicaciones.
+# Algunas del tipo "¿de qué me puedes/podemos hablar/conversar?" pueden dar complicaciones.
 PATRONES_TEMAS = [
-    r"(entonces )?de que (me )?(puedes|puede) hablar( conmigo)?",
-    r"(entonces )?(sobre )?que temas (puedes |puede )?(hablar|tratar|informar|hablas|tratas|conoces|dominas)",
-    r"(entonces )?que (me )?(puedes|puede) (informar|decir|contar|hacer)",
-    r"(entonces )?en que (me )?(puedes|puede) ayudar",
-    r"(entonces )?(que sabes( hacer)?|para que sirves|que haces)",
+    r"(entonces )?(de|sobre) que (me )?(puedes|puede|podemos|puedo|se puede) hablar( conmigo| contigo)?",
+    r"(entonces )?(de |sobre )?que temas (me )?(puedes |puede |podemos |puedo |se pueden )?(hablar|tratar|informar|hablas|tratas|conoces|dominas|sabes|conversas)",
+    r"(entonces )?que (me )?(puedes|puede|podemos|puedo) (informar|decir|contar|hacer|consultar|preguntar|conversar|tratar|conocer|saber|dominar)",
+    r"(entonces )?en que (me )?(puedes|puede|podemos) ayudar",
+    r"(entonces )?(que sabes( hacer)?|para que sirves|que haces|que informas|que conoces|que dominas)",
+    r"(entonces )?(sobre )?que (te )?(puedo|podemos) (preguntar|consultar|informar|decir|contar|hablar|tratar|conversar|conocer|saber|dominar)",
 ]
 TITULO_TEMAS = "¿De qué temas puede hablar BotAlcer y en qué me puede ayudar?"
 
@@ -677,7 +678,7 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
 
 
     # Limpiar la salida: espacios sobrantes, negritas y eco de la pregunta al principio
-    contenido = contenido.strip().replace("**", "")
+    contenido = re.sub(r"^[•\s]*¿[^?\n]*\?\s*\n+", "", contenido)
     q_eco = query.strip()
     if "?" in q_eco and contenido.lower().startswith(q_eco.lower()):
         contenido = contenido[len(q_eco):].strip()
@@ -699,8 +700,7 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     # Como el modelo Qwen3:1.7b añade, a veces info, pq ignora la orden "no comentes lo que falte".
     # Hay que eliminar las líneas donde el modelo va a sur aire y comenta lo que NO contiene el texto
     if contenido != SIN_INFO:
-        META = re.compile(r"(contenido (disponible|proporcionado)|documentaci[oó]n (disponible|proporcionada)"
-                          r"|no se (proporcionan?|mencionan?|incluyen?|especifican?|indica)"
+        META = re.compile(r"((este )?contenido (disponible|proporcionado|no incluye)|documentaci[oó]n (disponible|proporcionada)"                          r"|no se (proporcionan?|mencionan?|incluyen?|especifican?|indica)"
                           r"|el contenido no|sin mencionar)", re.I)
         lineas = [l for l in contenido.split("\n") if not META.search(l)]
         contenido = "\n".join(lineas).strip() or SIN_INFO
