@@ -321,14 +321,14 @@ def _sin_tildes(t):
 # Algunas del tipo "¿de qué me puedes/podemos hablar/conversar?" pueden dar complicaciones.
 _V = r"(hablar|chatear|conversar|charlar|tratar|informar|contar|decir|consultar|preguntar|cuestionar)"
 PATRONES_TEMAS = [
-    # "de/sobre qué (me/te) puedes/podemos/puedo hablar (conmigo)"
-    rf"(entonces )?(de|sobre) que (me |te )?(puedes|puede|podemos|puedo|permites|se puede) {_V}( conmigo| contigo)?",
-    # "qué temas (puedes) tratar/conoces/dominas..."
-    rf"(entonces )?(de |sobre )?que temas (me |te )?(puedes |puede |podemos |puedo |se pueden )?({_V}|tratas|conoces|dominas|sabes|conversas|saber)",
-    # "qué (me) puedes decir/contar/preguntar..." y "qué te puedo preguntar"
-    rf"(entonces )?(sobre )?que (me |te )?(puedes|puede|podemos|puedo) ({_V}|hacer|conocer|saber|dominar)",
-    r"(entonces )?en que (me )?(puedes|puede|podemos) ayudar",
-    r"(entonces )?(que sabes( hacer)?|para que sirves|que haces|que informas|que conoces|que dominas)",
+    # "de/sobre qué (más / otras cosas / otros temas) (me/te) puedes/podemos/puedo hablar (conmigo)"
+    rf"(entonces )?(de|sobre) que (mas |cosas |temas |otras cosas |otros temas |mas cosas |mas temas )?(me |te )?(puedes|puede|podemos|puedo|permites|se puede) {_V}( conmigo| contigo)?",
+    # "qué temas/cosas (más) (puedes) tratar/conoces/dominas..."
+    rf"(entonces )?(de |sobre )?que (otros |otras |mas )?(temas|cosas) (me |te )?(puedes |puede |podemos |puedo |se pueden )?({_V}|tratas|conoces|dominas|sabes|conversas|saber)",
+    # "qué (más) (me) puedes decir/contar/preguntar..." y "qué te puedo preguntar"
+    rf"(entonces )?(sobre )?que (mas |otras cosas |otros temas )?(me |te )?(puedes|puede|podemos|puedo) ({_V}|hacer|conocer|saber|dominar)",
+    r"(entonces )?en que (mas |otras cosas )?(me )?(puedes|puede|podemos) ayudar",
+    r"(entonces )?(que (mas |otras cosas |otros temas )?sabes( hacer)?|para que sirves|que (mas )?haces|que informas|que (mas )?conoces|que dominas)",
 ]
 TITULO_TEMAS = "¿De qué temas puede hablar BotAlcer y en qué me puede ayudar?"
 
@@ -451,6 +451,14 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
         respuesta = "¡De nada! Estoy siempre a disposición para cualquier duda que tengas sobre la Enfermedad Renal Crónica o la asociación ALCER."
         return respuesta
 
+    # Consultas demasiado vagas ("hablar", "ayuda", "tengo una duda"): pedir que concrete
+    SIMPLES = (r"(hablar|conversar|charlar|chatear|preguntar|consultar|ayuda|ayudame|informacion|info|consulta|duda|dudas|pregunta"
+             r"|una (duda|pregunta|consulta)|tengo una (duda|pregunta|consulta)"
+             r"|(quiero|necesito) (hablar|preguntar|consultar|ayuda|informacion)"
+             r"|(podemos|puedo|puedes) (hablar|preguntar|consultar)( algo| contigo| contigo algo)?)")
+    if re.fullmatch(SIMPLES, q_norm):
+        return "Por supuesto. ¿Sobre qué te gustaría hablar o qué quieres consultar?"
+
     # Consejo médico es para pregunta sobre qué tomar, dosis, etc.
     consejo_medico = (
         re.search(r"\b(que|cual)\b.*\b(medicacion|medicamento|medicamentos|pastilla|pastillas|farmaco|farmacos)\b.*\b(tomar|recomiendas|recomienda)\b", q_norm)
@@ -547,6 +555,16 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     )
     if rescatada:
         print(f"Aceptada por coincidencia de palabras clave: {matches[0]['score']:.4f}")
+
+    # Supuesto de que el usuario pide un tema general con una sola palabra ("los riñones"). Hay que ofrecer opciones según el título.
+    claves = palabras_clave(q_norm)
+    if len(claves) == 1 and not depende_del_historial and matches:
+        titulos = list(dict.fromkeys(
+            titulo_pregunta(m.get("metadata", {}).get("text", "")) for m in matches
+            if m["score"] >= UMBRAL_RESCATE
+            and claves <= palabras_clave(titulo_pregunta(m.get("metadata", {}).get("text", "")))))
+        if len(titulos) >= 2:
+            return "Tengo información sobre ese tema. ¿Qué te gustaría saber?  \n" + "  \n".join(f"• {t}" for t in titulos)
 
     if not matches or (matches[0]["score"] < UMBRAL_MINIMO and not rescatada):
         if matches:
