@@ -320,9 +320,9 @@ def _sin_tildes(t):
 # Para resolver problemas a la hora de "entender" las preguntas de los usuarios.
 # Algunas del tipo "¿de qué me puedes/podemos hablar/conversar?" pueden dar complicaciones.
 PATRONES_TEMAS = [
-    r"(entonces )?(de|sobre) que (me )?(puedes|puede|podemos|puedo|permtes|se puede) hablar( conmigo| contigo)?",
-    r"(entonces )?(de|sobre) que (te )?(puedo) (hablar|preguntar|cuestionar)( conmigo| contigo)?",
-    r"(entonces )?(de |sobre )?que temas (me )?(puedes |puede |podemos |puedo |se pueden )?(hablar|tratar|informar|hablas|tratas|conoces|dominas|sabes|conversas)",
+    r"(entonces )?(de|sobre) que (me )?(puedes|puede|podemos|puedo|permtes|se puede) hablar|chatear|conversar|informar|tratar|contar|decir|hablar|( conmigo| contigo)?",
+    r"(entonces )?(de|sobre) que (te )?(puedo) (hablar|preguntar|cuestionar|chatear|conversar|tratar)( conmigo| contigo)?",
+    r"(entonces )?(de |sobre )?que (temas) (me )?(puedes |puede |podemos |puedo |se pueden )?(hablar|tratar|informar|hablar|tratas|conoces|dominas|charlar|saber|conversas|chatear)",
     r"(entonces )?que (me )?(puedes|puede|podemos|puedo) (informar|decir|contar|hacer|consultar|preguntar|conversar|tratar|conocer|saber|dominar)",
     r"(entonces )?en que (me )?(puedes|puede|podemos) ayudar",
     r"(entonces )?(que sabes( hacer)?|para que sirves|que haces|que informas|que conoces|que dominas)",
