@@ -319,14 +319,16 @@ def _sin_tildes(t):
 ####### Comprender las preguntas de los usuarios coloquiales. ########
 # Para resolver problemas a la hora de "entender" las preguntas de los usuarios.
 # Algunas del tipo "¿de qué me puedes/podemos hablar/conversar?" pueden dar complicaciones.
+_V = r"(hablar|chatear|conversar|charlar|tratar|informar|contar|decir|consultar|preguntar|cuestionar)"
 PATRONES_TEMAS = [
-    r"(entonces )?(de|sobre) que (me )?(puedes|puede|podemos|puedo|permtes|se puede) hablar|chatear|conversar|informar|tratar|contar|decir|hablar|( conmigo| contigo)?",
-    r"(entonces )?(de|sobre) que (te )?(puedo) (hablar|preguntar|cuestionar|chatear|conversar|tratar)( conmigo| contigo)?",
-    r"(entonces )?(de |sobre )?que (temas) (me )?(puedes |puede |podemos |puedo |se pueden )?(hablar|tratar|informar|hablar|tratas|conoces|dominas|charlar|saber|conversas|chatear)",
-    r"(entonces )?que (me )?(puedes|puede|podemos|puedo) (informar|decir|contar|hacer|consultar|preguntar|conversar|tratar|conocer|saber|dominar)",
+    # "de/sobre qué (me/te) puedes/podemos/puedo hablar (conmigo)"
+    rf"(entonces )?(de|sobre) que (me |te )?(puedes|puede|podemos|puedo|permites|se puede) {_V}( conmigo| contigo)?",
+    # "qué temas (puedes) tratar/conoces/dominas..."
+    rf"(entonces )?(de |sobre )?que temas (me |te )?(puedes |puede |podemos |puedo |se pueden )?({_V}|tratas|conoces|dominas|sabes|conversas|saber)",
+    # "qué (me) puedes decir/contar/preguntar..." y "qué te puedo preguntar"
+    rf"(entonces )?(sobre )?que (me |te )?(puedes|puede|podemos|puedo) ({_V}|hacer|conocer|saber|dominar)",
     r"(entonces )?en que (me )?(puedes|puede|podemos) ayudar",
     r"(entonces )?(que sabes( hacer)?|para que sirves|que haces|que informas|que conoces|que dominas)",
-    r"(entonces )?(sobre )?que (te )?(puedo|podemos) (preguntar|consultar|informar|decir|contar|hablar|tratar|conversar|conocer|saber|dominar)",
 ]
 TITULO_TEMAS = "¿De qué temas puede hablar BotAlcer y en qué me puede ayudar?"
 
