@@ -316,10 +316,12 @@ def _sin_tildes(t):
     return "".join(c for c in unicodedata.normalize("NFD", t.lower()) if unicodedata.category(c) != "Mn")
 
 
+####### Comprender las preguntas de los usuarios coloquiales. ########
 # Para resolver problemas a la hora de "entender" las preguntas de los usuarios.
 # Algunas del tipo "¿de qué me puedes/podemos hablar/conversar?" pueden dar complicaciones.
 PATRONES_TEMAS = [
-    r"(entonces )?(de|sobre) que (me )?(puedes|puede|podemos|puedo|se puede) hablar( conmigo| contigo)?",
+    r"(entonces )?(de|sobre) que (me )?(puedes|puede|podemos|puedo|permtes|se puede) hablar( conmigo| contigo)?",
+    r"(entonces )?(de|sobre) que (te )?(puedo) (hablar|preguntar|cuestionar)( conmigo| contigo)?",
     r"(entonces )?(de |sobre )?que temas (me )?(puedes |puede |podemos |puedo |se pueden )?(hablar|tratar|informar|hablas|tratas|conoces|dominas|sabes|conversas)",
     r"(entonces )?que (me )?(puedes|puede|podemos|puedo) (informar|decir|contar|hacer|consultar|preguntar|conversar|tratar|conocer|saber|dominar)",
     r"(entonces )?en que (me )?(puedes|puede|podemos) ayudar",
