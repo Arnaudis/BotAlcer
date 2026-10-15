@@ -354,9 +354,12 @@ def limpiar_entrada(texto):
 
 VACIAS_NORM = {_sin_tildes(p) for p in PALABRAS_VACIAS}
 
+def _raiz(p):
+    return p[:-1] if len(p) > 3 and p.endswith("s") else p
+
 def palabras_clave(t):
     t = re.sub(r"[^\w\s]", " ", _sin_tildes(t))
-    return {p for p in t.split() if len(p) > 2 and p not in VACIAS_NORM}
+    return {_raiz(p) for p in t.split() if len(p) > 2 and p not in VACIAS_NORM}
 
 def cubre_titulo(q_norm, titulo):
     """True si la consulta tiene >= 2 palabras clave y todas están en el título de la pregunta."""
@@ -365,8 +368,8 @@ def cubre_titulo(q_norm, titulo):
 
 def cobertura(consulta, titulo):
     """Fracción de las palabras de la consulta que aparecen en el título de la pregunta."""
-    qt = set(re.sub(r"[^\w\s]", " ", _sin_tildes(consulta)).split())
-    tt = set(re.sub(r"[^\w\s]", " ", _sin_tildes(titulo)).split())
+    qt = {_raiz(p) for p in re.sub(r"[^\w\s]", " ", _sin_tildes(consulta)).split()}
+    tt = {_raiz(p) for p in re.sub(r"[^\w\s]", " ", _sin_tildes(titulo)).split()}
     return len(qt & tt) / len(qt) if qt else 0.0
 
 
@@ -611,7 +614,7 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     #Los contactos de Avericum se devuelven como están, sin gastar tiempo en el modelo. Es porque repite dos veces la información
     #con el prompt existente.
     titulo_mejor = titulo_pregunta(matches[0].get("metadata", {}).get("text", ""))
-    if len(matches) == 1 and re.search(r"dirección y cómo se puede contactar|de qué temas puede hablar BotAlcer", titulo_mejor):
+    if len(matches) == 1 and re.search(r"dirección y cómo se puede contactar|qué temas puede hablar BotAlcer", titulo_mejor, re.I):
         print("Respuesta directa: ficha de contacto o de temas (sin LLM)")
         print(f"⏱ TOTAL RAG: {time.time() - inicio_total:.2f} segundos")
         cuerpo = context.split("\n", 1)[1].strip() if "\n" in context else context
