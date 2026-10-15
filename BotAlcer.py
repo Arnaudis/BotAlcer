@@ -350,12 +350,15 @@ def limpiar_entrada(texto):
             break
     m = re.match(r"^\W*(quiero|quisiera|necesito|me gustaria)\s+(saber|conocer|informacion|mas informacion)\s*(sobre|acerca de)?\s*", s)
     if m and m.end() < len(t):
-        t = t[m.end():].strip()
+        t, s = t[m.end():].strip(), s[m.end():]
+    # "podemos hablar sobre riñones", "háblame de…", "dime algo sobre…" -> solo el tema
+    m = re.match(r"^\W*((podemos|puedo|puedes|podrias|podria)\s+hablar(me|nos)?|hablame|hablanos|dime|cuentame|cuentanos|que sabes|informacion)\s+(algo\s+|mas\s+)?(de|del|sobre|acerca de|acerca del)\s+", s)
+    if m and m.end() < len(t):
+        t, s = t[m.end():].strip(), s[m.end():]
     # Sustituir sinónimos por la palabra que usa el documento
     t = re.sub(r"\b(" + "|".join(SINONIMOS) + r")\b",
                lambda mo: SINONIMOS[mo.group(0).lower()], t, flags=re.I)
     return t
-
 
 VACIAS_NORM = {_sin_tildes(p) for p in PALABRAS_VACIAS}
 
@@ -550,6 +553,13 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
             texto_mejor = matches[0].get("metadata", {}).get("text", "")
             print(f"Rechazada por umbral: {matches[0]['score']:.4f} < {UMBRAL_MINIMO} "
                   f"| mejor pregunta: {titulo_pregunta(texto_mejor)}")
+            # Tema general de una sola palabra ("riñones"): ofrecer los títulos que encajan
+            claves = palabras_clave(q_norm)
+            sugeridas = [titulo_pregunta(m.get("metadata", {}).get("text", "")) for m in matches
+                         if m["score"] >= UMBRAL_RESCATE
+                         and claves <= palabras_clave(titulo_pregunta(m.get("metadata", {}).get("text", "")))]
+            if len(claves) == 1 and sugeridas:
+                return "Tengo información sobre ese tema. ¿Qué te gustaría saber?  \n" + "  \n".join(f"• {t}" for t in sugeridas)
         return "No dispongo de información suficiente en la documentación disponible."
     
 
@@ -681,7 +691,8 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
                 break
 
 
-    # Limpiar la salida: espacios sobrantes, negritas y eco de la pregunta al principio
+    # Limpiar la salida: espacios sobrantes, negritas, título repetido y eco de la pregunta al principio
+    contenido = contenido.strip().replace("**", "")
     contenido = re.sub(r"^[•\s]*¿[^?\n]*\?\s*\n+", "", contenido)
     q_eco = query.strip()
     if "?" in q_eco and contenido.lower().startswith(q_eco.lower()):
@@ -704,7 +715,9 @@ def rag_query(query, llm, history, index, embeddings, k=2, on_token=None):
     # Como el modelo Qwen3:1.7b añade, a veces info, pq ignora la orden "no comentes lo que falte".
     # Hay que eliminar las líneas donde el modelo va a sur aire y comenta lo que NO contiene el texto
     if contenido != SIN_INFO:
-        META = re.compile(r"((este )?contenido (disponible|proporcionado|no incluye)|documentaci[oó]n (disponible|proporcionada)"                          r"|no se (proporcionan?|mencionan?|incluyen?|especifican?|indica)"
+        META = re.compile(r"((este )?contenido (disponible|proporcionado|no incluye)"
+                          r"|documentaci[oó]n (disponible|proporcionada)"
+                          r"|no se (proporcionan?|mencionan?|incluyen?|especifican?|indica)"
                           r"|el contenido no|sin mencionar)", re.I)
         lineas = [l for l in contenido.split("\n") if not META.search(l)]
         contenido = "\n".join(lineas).strip() or SIN_INFO
